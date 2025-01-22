@@ -1,0 +1,70 @@
+- name: Install Docker
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Gather the distribution release name for both Mint / Ubuntu
+      shell: cat /etc/os-release | grep 'UBUNTU_CODENAME' | cut -d '=' -f 2
+      register: mint_ubuntu_distribution_release
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ mint_ubuntu_distribution_release.stdout }} stable
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create Docker group
+      group:
+        name: docker
+        state: present
+
+    - name: Add current user to Docker group
+      user:
+        name: "{{ ansible_env.SUDO_USER }}"
+        groups: docker
+        append: yes
+
+    - name: Restart Docker service
+      systemd:
+        name: docker
+        state: restarted
+
+    - name: Run docker hello-world
+      command: docker run hello-world
+      register: docker_output
+      become: no
+
+    - name: Print docker output
+      debug:
+        var: docker_output.stdout_lines
+
+    - name: Check docker hello-world output
+      fail:
+        msg: "Docker hello-world failed to run"
+      when: "'Hello from Docker!' not in docker_output.stdout"
