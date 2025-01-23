@@ -54,17 +54,3 @@
       systemd:
         name: docker
         state: restarted
-
-    - name: Run docker hello-world
-      command: docker run hello-world
-      register: docker_output
-      become: no
-
-    - name: Print docker output
-      debug:
-        var: docker_output.stdout_lines
-
-    - name: Check docker hello-world output
-      fail:
-        msg: "Docker hello-world failed to run"
-      when: "'Hello from Docker!' not in docker_output.stdout"

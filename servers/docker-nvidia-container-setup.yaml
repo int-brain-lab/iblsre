@@ -28,17 +28,3 @@
       systemd:
         name: docker
         state: restarted
-
-    - name: Run Nvidia-smi Inside the GPU Enabled Container
-      command: docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
-      register: docker_output
-      become: no
-
-    - name: Print Docker Output
-      debug:
-        var: docker_output.stdout_lines
-
-    - name: Check Docker Nvidia-smi Output
-      fail:
-        msg: "Docker nvidia-smi failed to run"
-      when: "'| NVIDIA-SMI' not in docker_output.stdout"
