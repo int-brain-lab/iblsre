@@ -1,0 +1,10 @@
+FROM  internationalbrainlab/iblsorter_base:latest
+
+ENV TQDM_DISABLE=1
+
+RUN git -C ./ibllib pull
+RUN git -C ./ibllib checkout prefect
+
+WORKDIR /root/Documents/PYTHON/prefect
+
+ADD ./iblserver_prefect.py /root/Documents/PYTHON/prefect/iblserver_prefect.py

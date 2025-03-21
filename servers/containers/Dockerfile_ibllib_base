@@ -1,0 +1,17 @@
+FROM  prefecthq/prefect:3-python3.12
+
+RUN apt-get update && apt-get install -y \
+    vim \
+    gcc \
+    git \
+    ffmpeg \
+    && apt-get autoremove \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /root/Documents/PYTHON/prefect
+WORKDIR /root/Documents/PYTHON
+
+RUN git clone https://github.com/int-brain-lab/ibllib.git
+RUN git clone https://github.com/int-brain-lab/iblscripts.git
+
+RUN pip install -e ./ibllib
