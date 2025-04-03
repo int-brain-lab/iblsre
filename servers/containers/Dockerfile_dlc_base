@@ -1,0 +1,50 @@
+#docker build -t internationalbrainlab/dlc:base -f Dockerfile.base
+FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive 
+ENV LANG=C.UTF-8
+ENV TF_FORCE_GPU_ALLOW_GROWTH=true
+
+ARG PYTHON=python3.11
+
+
+# Update the package list and install necessary dependencies
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    libsm6 \
+    libxext6 \
+    libgtk-3-dev \
+    build-essential \
+    wget \
+    vim \
+    git \
+    ffmpeg
+
+# The apt-add-repository command is installed by software-properties common above
+RUN apt-add-repository -y ppa:deadsnakes/ppa && apt-get update && apt-get install -y ${PYTHON}
+
+# Clean up
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Python by creating symlinks and getting the latest pip
+RUN ln -sf /usr/bin/${PYTHON} /usr/local/bin/python3
+RUN ln -sf /usr/bin/${PYTHON} /usr/local/bin/python
+RUN wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py
+RUN python -m pip install -U setuptools
+RUN python --version && pip --version
+
+# Install ibllib
+WORKDIR /root/Documents/PYTHON
+RUN git clone https://github.com/int-brain-lab/ibllib.git
+RUN pip install -e ./ibllib
+
+# Install DLC
+RUN pip install --upgrade deeplabcut
+RUN pip install tensorflow==2.12
+RUN pip install numpy==1.24.0 decorator==4.4.2
+RUN pip install prefect
+RUN pip install ipython tensorpack tf_slim
+
+# Create folders
+RUN mkdir -p /root/Documents/PYTHON/prefect
+WORKDIR /root/Documents/PYTHON

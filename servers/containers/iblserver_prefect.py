@@ -4,12 +4,15 @@ This script searches for new sessions (those with a raw_session.flag file), and 
 preprocessing tasks in Alyx. No file registration takes place in this script.
 """
 
+import asyncio
 import traceback
 import datetime
 import logging
 from pathlib import Path
 
-from prefect import flow, task, deploy, concurrency
+from prefect import flow, task, deploy, get_client
+from prefect.client.schemas.objects import ConcurrencyLimitConfig, ConcurrencyLimitStrategy
+from prefect.client.schemas.filters import FlowRunFilter
 
 from one.api import ONE
 from one.webclient import AlyxClient
@@ -22,6 +25,41 @@ from ibllib.pipes.base_tasks import Task
 MAX_TASKS = 10
 _logger = logging.getLogger('ibllib')
 subjects_path = Path('/mnt/s0/Data/Subjects/')
+
+
+
+
+
+async def delete_cancelled_runs(max_duration_seconds=20):
+    async with get_client() as client:
+        # Fetch completed flow runs
+        flow_runs = await client.read_flow_runs(
+            flow_run_filter=FlowRunFilter(
+                state=dict(type=dict(any_=["CANCELLED"]))
+            )
+        )
+        for run in flow_runs:
+            await client.delete_flow_run(flow_run_id=run.id)
+            print(f"Deleted run {run.name} with state {run.state}")
+
+
+async def delete_short_runs(max_duration_seconds=20):
+    async with get_client() as client:
+        # Fetch completed flow runs
+        flow_runs = await client.read_flow_runs(
+            flow_run_filter=FlowRunFilter(
+                state=dict(type=dict(any_=["COMPLETED"]))
+            )
+        )
+        for run in flow_runs:
+            # Calculate run duration
+            duration = run.end_time - run.start_time
+            if duration < datetime.timedelta(seconds=max_duration_seconds):
+                # Delete the short run
+                await client.delete_flow_run(flow_run_id=run.id)
+                print(f"Deleted run {run.name} with duration {duration.total_seconds()} seconds")
+
+
 
 class JobCreator(Task):
     """A task for creating session preprocessing tasks."""
@@ -196,19 +234,28 @@ def small_jobs():
 
 @flow(log_prints=True)
 def large_jobs():
+    # Run the function
+    asyncio.run(delete_short_runs())
+    asyncio.run(delete_cancelled_runs())
     for future in _get_jobs(mode='large'):
         future.wait()
 
 @flow(log_prints=True)
 def iblsorter_jobs():
-    for future in _get_jobs(mode='all', env=['iblsorter'], max_tasks=1):
+    for future in _get_jobs(mode='large', env=['iblsorter'], max_tasks=1):
         future.wait()
 
+@flow(log_prints=True)
+def video_jobs():
+    for future in _get_jobs(mode='large', env=['dlc'], max_tasks=1):
+        future.wait()
 
 @flow(log_prints=True)
 def create_jobs():
     print('starting job creation task')
     run_job_creator_task()
+
+
 
 
 if __name__ == "__main__":
@@ -227,24 +274,34 @@ if __name__ == "__main__":
         push=False,
         build=False,
     )
+
     deploy(
         create_jobs.to_deployment(
             name="iblserver-create-jobs",
             job_variables=kwargs_job_variables,
-            concurrency_limit=1,
+            concurrency_limit=ConcurrencyLimitConfig(
+                limit=1,
+                collision_strategy=ConcurrencyLimitStrategy.CANCEL_NEW
+                ),
             interval=datetime.timedelta(minutes=20)
             ),
         small_jobs.to_deployment(
             name='iblserver-small-jobs',
             job_variables=kwargs_job_variables,
-            concurrency_limit=3,
+            concurrency_limit=ConcurrencyLimitConfig(
+                limit=1,
+                collision_strategy=ConcurrencyLimitStrategy.CANCEL_NEW
+                ),
             interval=datetime.timedelta(minutes=120)
             ),
         large_jobs.to_deployment(
             name='iblserver-large-jobs',
             job_variables=kwargs_job_variables,
-            concurrency_limit=1,
-            interval=datetime.timedelta(minutes=360)
+            concurrency_limit=ConcurrencyLimitConfig(
+                limit=1,
+                collision_strategy=ConcurrencyLimitStrategy.CANCEL_NEW
+                ),
+            interval=datetime.timedelta(minutes=420)
             ),
         image="internationalbrainlab/ibllib:latest",
         **kwargs_deploy
@@ -253,9 +310,25 @@ if __name__ == "__main__":
         iblsorter_jobs.to_deployment(
             name='iblserver-iblsorter-jobs',
             job_variables=kwargs_job_variables,
-            concurrency_limit=1,
-            interval=datetime.timedelta(minutes=60 * 3)
+            concurrency_limit=ConcurrencyLimitConfig(
+                limit=1,
+                collision_strategy=ConcurrencyLimitStrategy.CANCEL_NEW
+                ),
+            interval=datetime.timedelta(minutes=60 * 4)
             ),
         image="internationalbrainlab/iblsorter:latest",
+        **kwargs_deploy
+        )
+    deploy(
+        video_jobs.to_deployment(
+            name='iblserver-dlc-jobs',
+            job_variables=kwargs_job_variables,
+            concurrency_limit=ConcurrencyLimitConfig(
+                limit=1,
+                collision_strategy=ConcurrencyLimitStrategy.CANCEL_NEW
+                ),
+            interval=datetime.timedelta(minutes=60 * 6)
+            ),
+        image="internationalbrainlab/dlc:latest",
         **kwargs_deploy
         )
