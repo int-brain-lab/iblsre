@@ -234,9 +234,6 @@ def small_jobs():
 
 @flow(log_prints=True)
 def large_jobs():
-    # Run the function
-    asyncio.run(delete_short_runs())
-    asyncio.run(delete_cancelled_runs())
     for future in _get_jobs(mode='large'):
         future.wait()
 
@@ -254,7 +251,9 @@ def video_jobs():
 def create_jobs():
     print('starting job creation task')
     run_job_creator_task()
-
+    print('Clean up')
+    asyncio.run(delete_short_runs())
+    asyncio.run(delete_cancelled_runs())
 
 
 
@@ -267,7 +266,8 @@ if __name__ == "__main__":
             '/mnt/h1:/scratch',  # TODO this is a parameter
             ],
         user='ibladmin',
-        image_pull_policy='Never',
+        image_pull_policy='Never',  # this makes sure we use the local image, allowing for canaries
+        run_config={'remove': True}  # this makes sure the containers are removed after a run. this doesn't work TODO find the good option
         )
     kwargs_deploy = dict(
         work_pool_name="iblserver-docker-pool",
@@ -327,7 +327,7 @@ if __name__ == "__main__":
                 limit=1,
                 collision_strategy=ConcurrencyLimitStrategy.CANCEL_NEW
                 ),
-            interval=datetime.timedelta(minutes=60 * 6)
+            # interval=datetime.timedelta(minutes=60 * 6)
             ),
         image="internationalbrainlab/dlc:latest",
         **kwargs_deploy

@@ -1,6 +1,8 @@
-FROM  internationalbrainlab/iblsorter_base:latest
+FROM  internationalbrainlab/ibllib_base:latest
 
 ENV TQDM_DISABLE=1
+
+WORKDIR /root/Documents/PYTHON
 
 RUN git -C ./ibllib pull
 RUN git -C ./ibllib checkout prefect
