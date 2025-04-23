@@ -1,4 +1,4 @@
-FROM  internationalbrainlab/iblsorter_base:latest
+FROM internationalbrainlab/iblsorter_base:latest
 
 ENV TQDM_DISABLE=1
 ENV DART_SIGNALS_DISABLE=0
