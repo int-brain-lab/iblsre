@@ -1,12 +1,13 @@
 services:
-  prefect:
-    image: prefecthq/prefect:3-python3.12
+  prefect-service:
+    image: internationalbrainlab/ibllib_base:latest
     container_name: prefect-ibl-server
     ports:
-      - "42024:42024"
+      - "42024:4200"
     environment:
-      - PREFECT_API_URL=http://127.0.0.1:42024/api
-    command: prefect server start
+      - PREFECT_API_URL=http://127.0.0.1:4200/api
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+    command: prefect-service-entrypoint.sh
     restart: always
     volumes:
       - /mnt/s0/logs:/var/log

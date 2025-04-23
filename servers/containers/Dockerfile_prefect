@@ -1,0 +1,11 @@
+FROM internationalbrainlab/prefect:latest
+
+WORKDIR /root/Documents/PYTHON
+
+RUN git -C ./ibllib pull
+RUN git -C ./ibllib checkout prefect
+
+WORKDIR /root/Documents/PYTHON/prefect
+
+ADD ./iblserver_prefect.py /root/Documents/PYTHON/prefect/iblserver_prefect.py
+ADD ./prefect-service-entrypoint.sh /root/Documents/PYTHON/prefect/prefect-service-entrypoint.sh
