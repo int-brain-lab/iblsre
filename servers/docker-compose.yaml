@@ -1,0 +1,12 @@
+services:
+  prefect:
+    image: prefect:3-latest
+    container_name: prefect-ibl-server
+    ports:
+      - "42024:42024"
+    environment:
+      - PREFECT_API_URL=http://127.0.0.1:42024/api
+    command: prefect server start
+    restart: always
+    volumes:
+      - /mnt/s0/logs:/var/log
