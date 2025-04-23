@@ -1,6 +1,6 @@
 services:
   prefect:
-    image: prefect:3-latest
+    image: prefecthq/prefect:3-python3.12
     container_name: prefect-ibl-server
     ports:
       - "42024:42024"
