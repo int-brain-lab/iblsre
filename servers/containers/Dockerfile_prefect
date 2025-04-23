@@ -1,4 +1,4 @@
-FROM internationalbrainlab/prefect:latest
+FROM internationalbrainlab/ibllib_base:latest
 
 WORKDIR /root/Documents/PYTHON
 
