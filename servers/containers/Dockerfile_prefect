@@ -4,6 +4,7 @@ WORKDIR /root/Documents/PYTHON
 
 RUN git -C ./ibllib pull
 RUN git -C ./ibllib checkout prefect
+RUN pip install prefect-docker
 
 WORKDIR /root/Documents/PYTHON/prefect
 
