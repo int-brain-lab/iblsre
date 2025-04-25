@@ -1,3 +1,4 @@
+### heavily inspired by # https://github.com/rpeden/prefect-docker-compose/blob/main/docker-compose.yml
 version: "3.9"
 services:
   ### Prefect Database
@@ -12,7 +13,6 @@ services:
       - 5432
     volumes: 
       - db:/var/lib/postgresql/data
-    profiles: ["server"]
 
   ### Prefect Server API and UI
   server:
@@ -35,31 +35,7 @@ services:
       - 4200:4200
     depends_on:
       - database
-    profiles: ["server"]
 
-  ## Prefect IBL Worker
-  worker:
-    image: internationalbrainlab/prefect:latest
-    restart: always
-    entrypoint: ["/bin/bash", "/root/Documents/PYTHON/prefect/prefect-service-entrypoint.sh"]
-    environment:
-      - PREFECT_API_URL=http://server:4200/api
-#       Use PREFECT_API_KEY if connecting the worker to Prefect Cloud
-#     - PREFECT_API_KEY=YOUR_API_KEY
-    profiles: ["worker"]
-    depends_on:
-      - server
-
-  ### Prefect CLI
-  cli:
-    image: internationalbrainlab/prefect:latest
-    entrypoint: "bash"
-    environment:
-      - PREFECT_API_URL=http://server:4200/api
-#       Use PREFECT_API_KEY to use the CLI to interact with Prefect Cloud
-#     - PREFECT_API_KEY=YOUR_API_KEY
-    profiles: ["cli"]
-      
 volumes:
   prefect:
   db:

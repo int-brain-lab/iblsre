@@ -10,6 +10,9 @@ import datetime
 import logging
 from pathlib import Path
 
+from pydantic import Field
+from pydantic_settings import BaseSettings
+
 from prefect import flow, task, deploy, get_client
 from prefect.client.schemas.objects import ConcurrencyLimitConfig, ConcurrencyLimitStrategy
 from prefect.client.schemas.filters import FlowRunFilter
@@ -25,7 +28,6 @@ from ibllib.pipes.base_tasks import Task
 MAX_TASKS = 10
 _logger = logging.getLogger('ibllib')
 subjects_path = Path('/mnt/s0/Data/Subjects/')
-
 
 
 
@@ -256,18 +258,30 @@ def create_jobs():
     asyncio.run(delete_cancelled_runs())
 
 
+class CommandLineArguments(BaseSettings, cli_parse_args=True):
+    """
+    import sys
+    sys.argv = ['iblserver_prefect.py', '--scratch_directory', '/home']
+    print(CommandLineArguments().model_dump())
+    """
+    scratch_directory: Path = Field(description='Scratch directory - SSD drive', default='/mnt/s1')
+
 
 if __name__ == "__main__":
+    """
+    python iblserver_prefect.py --scratch_directory /mnt/s1
+    """
+    args = CommandLineArguments()  # this parses input arguments
     kwargs_job_variables = dict(
         volumes=[
             '/mnt/s0:/mnt/s0',
             '/home/ibladmin/.one:/root/.one',
             '/home/ibladmin/.globusonline:/root/.globusonline',
-            '/mnt/h1:/scratch',  # TODO this is a parameter
+            f'{args.scratch_directory}:/scratch',
             ],
         user='ibladmin',
         image_pull_policy='Never',  # this makes sure we use the local image, allowing for canaries
-        run_config={'remove': True}  # this makes sure the containers are removed after a run. this doesn't work TODO find the good option
+        run_config={'remove': True}  # this makes sure the containers are removed after a run. this doesn't work FIXME
         )
     kwargs_deploy = dict(
         work_pool_name="iblserver-docker-pool",

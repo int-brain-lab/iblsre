@@ -3,6 +3,7 @@
 The playbook are targeted for Ubuntu family machines: Ubuntu and Mint. They may work or not on Debian OS.
 
 TODO: move the documentation to build servers here
+- install the Nvidia driver: we require support for CUDA 12, so the minimum driver is 530.
 - install python (using uv ? )
 - install RAID and create necessary folders
 - install Globus
@@ -39,12 +40,15 @@ The idea is to be able to re-build and manipulate often only the small top layer
 ### Build top layers
 ```shell
 DOCKER_BUILD_PATH=~/Documents/PYTHON/iblsre/servers/containers
-# builds the DLC containers
+# builds the DLC container
 docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/dlc:latest -f $DOCKER_BUILD_PATH/Dockerfile_dlc --no-cache
-# builds the IBLLIB containers
+# builds the IBLLIB container
 docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/ibllib:latest -f $DOCKER_BUILD_PATH/Dockerfile_ibllib --no-cache
-# builds the IBLSORTER containers
+# builds the IBLSORTER container
 docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/iblsorter:latest  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter --no-cache
+# builds the PREFECT container
+docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/prefect:latest  -f $DOCKER_BUILD_PATH/Dockerfile_prefect --no-cache
+
 # At the end, deploy the flows to prefect and run
 cd ~/Documents/PYTHON/iblsre/servers/containers
 python iblserver_prefect.py   # NB: this needs to be run in the same directory as the script: the relative path of this script needs to be the same as the relative path
@@ -89,24 +93,49 @@ docker run \
 ```
 
 
-## Install Prefect
+## Install the Pipeline (only once)
 Pre-requisistes
-TODO: install prefect and configure concurrency as an ansible workflow
+TODO CRITICAL: install prefect and **configure concurrency** as an ansible workflow
 TODO: recover docker logs in prefect 
 TODO: procedure for canary and update
 TODO: add containers for suite2p, litpose
+TODO: install prefect in ibllib environment. Should this be a separate env ? 
 
 
 ```shell
+sudo systemctl stop ibl_large_jobs
+sudo systemctl stop ibl_other_jobs
+sudo systemctl disable ibl_large_jobs
+sudo systemctl disable ibl_other_jobs
+# also remove service files ? 
+```
+This only needs to happen once, has docker compose will restart after each reboot
 
+```shell
+# first start the dockerized prefect server
 mkdir /mnt/s0/logs
-
+docker compose up -d
+# then create the workpool locally
+iblscripts
 prefect work-pool create --type docker iblserver-docker-pool
-prefect worker start --pool iblserver-docker-pool
-# TODO using ansible, install prefect and setup a service: https://docs.prefect.io/v3/deploy/daemonize-processes, 
-# TODO using ansible, download all of the docker images needed for extraction
+```
 
-cd ~/Documents/PYTHON/iblsre/servers/containers
-python iblserver_prefect.py   # NB: this needs to be run here: the relative path of this script needs to be the same as the relative path
-prefect deployment run 'create-jobs/iblserver-create-jobs'
+
+
+## Start the Pipeline
+TODO move from tmux to a service for the worker.
+TODO reset all concurrency slots on a hard reboot
+```shell
+tmux new -s prefect
+iblcripts
+python iblserver_prefect.py
+prefect worker start --pool iblserver-docker-pool
+```
+
+
+## Cheat sheet
+
+```shell
+# access any container in interactive mode
+docker run -it internationalbrainlab/dlc /bin/bash
 ```

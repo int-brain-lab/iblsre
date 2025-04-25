@@ -1,4 +1,4 @@
-FROM  internationalbrainlab/ibllib_base:latest
+FROM internationalbrainlab/ibllib_base:latest
 
 ENV TQDM_DISABLE=1
 
