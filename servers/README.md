@@ -9,6 +9,7 @@ TODO: move the documentation to build servers here
 - install Globus
 - what is the github policy ? Should a dev put a key in each server or we clone in http ? 
 
+
 ## Install Ansible
 
 ```shell
@@ -74,24 +75,7 @@ docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationa
 docker image push internationalbrainlab/ibllib_base:latest
 docker image push internationalbrainlab/iblsorter_base:latest
 docker image push internationalbrainlab/dlc_base:latest
-...
-
-
-Run interactive mode with the volumes mounted
-```shell
-
-docker run \
-  --it \
-  --rm \
-  --name spikesorter \
-  --gpus 1 \
-  -v /mnt/s1:/mnt/s1 \
-  -v /home/$USER/.one:/root/.one \
-  -v /mnt/h1:/scratch \
-  internationalbrainlab/iblsorter:latest \
-  python /root/Documents/PYTHON/ibl-sorter/examples/run_single_recording.py $BINFILE  /mnt/h1/iblsorter_integration --scratch_directory /scratch
 ```
-
 
 ## Install the Pipeline (only once)
 Pre-requisistes
@@ -128,14 +112,25 @@ TODO reset all concurrency slots on a hard reboot
 ```shell
 tmux new -s prefect
 iblcripts
-python iblserver_prefect.py
+python iblserver_prefect.py --scratch_directory /mnt/h0
 prefect worker start --pool iblserver-docker-pool
 ```
 
 
 ## Cheat sheet
-
+#TODO: show how to have /mnt/s0 volumes in docker shell, maybe using compose, or by adding the options to the docker run call
 ```shell
 # access any container in interactive mode
 docker run -it internationalbrainlab/dlc /bin/bash
+
+# run  in interactive mode with the volumes mounted
+docker run \
+  --it \
+  --rm \
+  --name spikesorter \
+  -v /mnt/s1:/mnt/s1 \
+  -v /home/$USER/.one:/root/.one \
+  -v /mnt/h1:/scratch \  # FIXME this is a parameter
+  internationalbrainlab/iblsorter:latest \
+  /bin/bash
 ```

@@ -236,7 +236,7 @@ def small_jobs():
 
 @flow(log_prints=True)
 def large_jobs():
-    for future in _get_jobs(mode='large'):
+    for future in _get_jobs(mode='large', max_tasks=25):
         future.wait()
 
 @flow(log_prints=True)
