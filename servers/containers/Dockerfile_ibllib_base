@@ -15,3 +15,4 @@ RUN git clone https://github.com/int-brain-lab/ibllib.git
 RUN git clone https://github.com/int-brain-lab/iblscripts.git
 
 RUN pip install -e ./ibllib
+RUN pip install prefect[dask]

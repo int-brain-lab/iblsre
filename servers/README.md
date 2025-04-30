@@ -38,6 +38,7 @@ And then logout and login again.
 The containers are setup with 2 images: a base image that contains all of the heavy lifting installation, and a second image that contains a few copy and git pull instructions to update the containers.
 The idea is to be able to re-build and manipulate often only the small top layers for python code updates and canaries, while the heavy layers containing environments are more stable.
 
+
 ### Build top layers
 ```shell
 DOCKER_BUILD_PATH=~/Documents/PYTHON/iblsre/servers/containers
@@ -52,8 +53,8 @@ docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationa
 
 # At the end, deploy the flows to prefect and run
 cd ~/Documents/PYTHON/iblsre/servers/containers
-python iblserver_prefect.py   # NB: this needs to be run in the same directory as the script: the relative path of this script needs to be the same as the relative path
-# at last, this is an example to run one of the deployments right away (by default the schedul)
+python iblserver_prefect.py   # NB: this needs to be run in the same directory as the script: the relative path of this script needs to be the same as the relative path in each one of the docker containers
+# at last, this is an example to run one of the deployments right away (by default the scheduler)
 prefect deployment run iblsorter-jobs/iblserver-iblsorter-jobs
 ```
 
@@ -85,6 +86,11 @@ TODO: procedure for canary and update
 TODO: add containers for suite2p, litpose
 TODO: install prefect in ibllib environment. Should this be a separate env ? 
 
+Big todo: rebuild the containers with the 1000 user by default to mappings
+https://stackoverflow.com/questions/72709443/how-to-have-consistent-ownership-of-mounted-volumes-in-docker
+
+Big todo: try using dask runner to exploit multi-processing https://docs.prefect.io/integrations/prefect-dask
+
 
 ```shell
 sudo systemctl stop ibl_large_jobs
@@ -98,13 +104,12 @@ This only needs to happen once, has docker compose will restart after each reboo
 ```shell
 # first start the dockerized prefect server
 mkdir /mnt/s0/logs
+cd ~/Documents/PYTHON/iblsre/servers
 docker compose up -d
 # then create the workpool locally
 iblscripts
 prefect work-pool create --type docker iblserver-docker-pool
 ```
-
-
 
 ## Start the Pipeline
 TODO move from tmux to a service for the worker.
@@ -112,10 +117,10 @@ TODO reset all concurrency slots on a hard reboot
 ```shell
 tmux new -s prefect
 iblcripts
+cd ~/Documents/PYTHON/iblsre/servers/containers
 python iblserver_prefect.py --scratch_directory /mnt/h0
 prefect worker start --pool iblserver-docker-pool
 ```
-
 
 ## Cheat sheet
 #TODO: show how to have /mnt/s0 volumes in docker shell, maybe using compose, or by adding the options to the docker run call
