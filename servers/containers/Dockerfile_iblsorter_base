@@ -2,6 +2,20 @@ FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 # FROM  pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
 # RUN nvidia-smi  # uncomment to enforce GPU availability during the run
 
+ARG UID=1000
+ARG GID=1000
+
+# create a new user with same UID & PID but no password
+RUN groupadd --gid ${GID} ibladmin && \
+    useradd --create-home ibladmin --uid=${UID} --gid=${GID} --groups root && \
+    passwd --delete ibladmin
+# add user to the sudo group and set sudo group to no passoword
+RUN apt update && \
+    apt install -y sudo && \
+    adduser ibladmin sudo && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# install system packages and clean-up cache
 RUN apt-get update && apt-get install -y \
     vim \
     gcc \
@@ -12,9 +26,13 @@ RUN apt-get update && apt-get install -y \
     && apt-get autoremove \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /root/Documents/PYTHON
-WORKDIR /root/Documents/PYTHON
+# setup default user when enter the container
+RUN chown -fR ibladmin:ibladmin /opt/conda
+USER ${UID}:${GID}
+RUN mkdir -p /home/ibladmin/Documents/PYTHON
+WORKDIR /home/ibladmin/Documents/PYTHON
 
+# install iblsorter
 RUN conda install -c conda-forge cupy
 
 RUN git clone -b aws https://github.com/int-brain-lab/ibl-sorter.git

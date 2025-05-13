@@ -6,7 +6,18 @@ ENV LANG=C.UTF-8
 ENV TF_FORCE_GPU_ALLOW_GROWTH=true
 
 ARG PYTHON=python3.11
+ARG UID=1000
+ARG GID=1000
 
+# create a new user with same UID & PID but no password
+RUN groupadd --gid ${GID} ibladmin && \
+    useradd --create-home ibladmin --uid=${UID} --gid=${GID} --groups root && \
+    passwd --delete ibladmin
+# add user to the sudo group and set sudo group to no passoword
+RUN apt update && \
+    apt install -y sudo && \
+    adduser ibladmin sudo && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Update the package list and install necessary dependencies
 RUN apt-get update && apt-get install -y \
@@ -33,8 +44,10 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py
 RUN python -m pip install -U setuptools
 RUN python --version && pip --version
 
-# Install ibllib
-WORKDIR /root/Documents/PYTHON
+# From now on we operate as user ibladmin
+USER ${UID}:${GID}
+WORKDIR /home/ibladmin/Documents/PYTHON
+
 RUN git clone https://github.com/int-brain-lab/ibllib.git
 RUN pip install -e ./ibllib
 
@@ -46,5 +59,5 @@ RUN pip install prefect
 RUN pip install ipython tensorpack tf_slim
 
 # Create folders
-RUN mkdir -p /root/Documents/PYTHON/prefect
-WORKDIR /root/Documents/PYTHON
+RUN mkdir -p /home/ibladmin/Documents/PYTHON/prefect
+WORKDIR /home/ibladmin/Documents/PYTHON

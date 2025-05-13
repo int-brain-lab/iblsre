@@ -125,17 +125,22 @@ prefect worker start --pool iblserver-docker-pool
 ## Cheat sheet
 #TODO: show how to have /mnt/s0 volumes in docker shell, maybe using compose, or by adding the options to the docker run call
 ```shell
-# access any container in interactive mode
-docker run -it internationalbrainlab/dlc /bin/bash
+# ibllib in interactive mode
+docker run \
+  -it \
+  --rm \
+  --name ibllib \
+  -v /mnt/s0:/mnt/s0 \
+  -v /home/$USER/.one:/root/.one \
+  internationalbrainlab/ibllib
 
 # run  in interactive mode with the volumes mounted
 docker run \
-  --it \
+  -it \
   --rm \
   --name spikesorter \
-  -v /mnt/s1:/mnt/s1 \
+  -v /mnt/s0:/mnt/s0 \
   -v /home/$USER/.one:/root/.one \
   -v /mnt/h1:/scratch \  # FIXME this is a parameter
-  internationalbrainlab/iblsorter:latest \
-  /bin/bash
+  internationalbrainlab/iblsorter:latest
 ```

@@ -2,11 +2,9 @@ FROM internationalbrainlab/ibllib_base:latest
 
 ENV TQDM_DISABLE=1
 
-WORKDIR /root/Documents/PYTHON
+WORKDIR /home/ibladmin/Documents/PYTHON
 
 RUN git -C ./ibllib pull
 RUN git -C ./ibllib checkout prefect
 
-WORKDIR /root/Documents/PYTHON/prefect
-
-ADD ./iblserver_prefect.py /root/Documents/PYTHON/prefect/iblserver_prefect.py
+ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py

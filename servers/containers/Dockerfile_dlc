@@ -2,15 +2,12 @@ FROM internationalbrainlab/dlc_base:latest
 
 ENV TQDM_DISABLE=1
 
-# Create folders
-WORKDIR /root/Documents/PYTHON
+WORKDIR /home/ibladmin/Documents/PYTHON
 
 RUN git -C ./ibllib pull
 RUN git -C ./ibllib checkout prefect
 
 RUN git clone --depth 1 --single-branch --branch master https://github.com/int-brain-lab/iblvideo.git
-ENV PYTHONPATH=/root/Documents/PYTHON/iblvideo
+ENV PYTHONPATH=/home/ibladmin/Documents/PYTHON/iblvideo
 
-
-WORKDIR /root/Documents/PYTHON/prefect
-ADD ./iblserver_prefect.py /root/Documents/PYTHON/prefect/iblserver_prefect.py
+ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py

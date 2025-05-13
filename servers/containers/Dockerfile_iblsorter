@@ -5,11 +5,10 @@ ENV DART_SIGNALS_DISABLE=0
 ENV MKL_SERVICE_FORCE_INTEL=1
 ENV MKL_THREADING_LAYER=GNU
 
+WORKDIR /home/ibladmin/Documents/PYTHON
 ADD ./iblserver_prefect.py /root/Documents/PYTHON/prefect/iblserver_prefect.py
 
 RUN git -C ./ibl-sorter pull
 RUN git -C ./ibllib pull
 RUN git -C ./ibllib checkout prefect
 RUN git -C ./ibllib rev-parse HEAD
-RUN mkdir -p /root/Documents/PYTHON/prefect
-WORKDIR /root/Documents/PYTHON/prefect
