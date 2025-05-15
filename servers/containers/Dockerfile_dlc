@@ -10,4 +10,5 @@ RUN git -C ./ibllib checkout prefect
 RUN git clone --depth 1 --single-branch --branch master https://github.com/int-brain-lab/iblvideo.git
 ENV PYTHONPATH=/home/ibladmin/Documents/PYTHON/iblvideo
 
+WORKDIR /home/ibladmin/Documents/PYTHON/prefect
 ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py

@@ -7,4 +7,5 @@ WORKDIR /home/ibladmin/Documents/PYTHON
 RUN git -C ./ibllib pull
 RUN git -C ./ibllib checkout prefect
 
+WORKDIR /home/ibladmin/Documents/PYTHON/prefect
 ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py

@@ -43,13 +43,13 @@ The idea is to be able to re-build and manipulate often only the small top layer
 ```shell
 DOCKER_BUILD_PATH=~/Documents/PYTHON/iblsre/servers/containers
 # builds the DLC container
-docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/dlc:latest -f $DOCKER_BUILD_PATH/Dockerfile_dlc --no-cache
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/dlc:latest -f $DOCKER_BUILD_PATH/Dockerfile_dlc --no-cache
 # builds the IBLLIB container
-docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/ibllib:latest -f $DOCKER_BUILD_PATH/Dockerfile_ibllib --no-cache
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/ibllib:latest -f $DOCKER_BUILD_PATH/Dockerfile_ibllib --no-cache
 # builds the IBLSORTER container
-docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/iblsorter:latest  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter --no-cache
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:latest  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter --no-cache
 # builds the PREFECT container
-docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/prefect:latest  -f $DOCKER_BUILD_PATH/Dockerfile_prefect --no-cache
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/prefect:latest  -f $DOCKER_BUILD_PATH/Dockerfile_prefect --no-cache
 
 # At the end, deploy the flows to prefect and run
 cd ~/Documents/PYTHON/iblsre/servers/containers
@@ -85,9 +85,6 @@ TODO: recover docker logs in prefect
 TODO: procedure for canary and update
 TODO: add containers for suite2p, litpose
 TODO: install prefect in ibllib environment. Should this be a separate env ? 
-
-Big todo: rebuild the containers with the 1000 user by default to mappings
-https://stackoverflow.com/questions/72709443/how-to-have-consistent-ownership-of-mounted-volumes-in-docker
 
 Big todo: try using dask runner to exploit multi-processing https://docs.prefect.io/integrations/prefect-dask
 
@@ -144,3 +141,4 @@ docker run \
   -v /mnt/h1:/scratch \  # FIXME this is a parameter
   internationalbrainlab/iblsorter:latest
 ```
+

@@ -275,8 +275,8 @@ if __name__ == "__main__":
     kwargs_job_variables = dict(
         volumes=[
             '/mnt/s0:/mnt/s0',
-            '/home/ibladmin/.one:/root/.one',
-            '/home/ibladmin/.globusonline:/root/.globusonline',
+            '/home/ibladmin/.one:/home/ibladmin/.one',
+            '/home/ibladmin/.globusonline:/home/ibladmin/.globusonline',
             f'{args.scratch_directory}:/scratch',
             ],
         user='ibladmin',
