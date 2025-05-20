@@ -106,9 +106,12 @@ docker compose up -d
 # then create the workpool locally
 iblscripts
 prefect work-pool create --type docker iblserver-docker-pool
+prefect concurrency-limit  create gpu 1
+prefect concurrency-limit  create large_jobs 3
+prefect concurrency-limit  create small_jobs 6
 ```
 
-## Start the Pipeline
+## Start the Prefect server and the
 TODO move from tmux to a service for the worker.
 TODO reset all concurrency slots on a hard reboot
 ```shell
@@ -128,7 +131,7 @@ docker run \
   --rm \
   --name ibllib \
   -v /mnt/s0:/mnt/s0 \
-  -v /home/$USER/.one:/root/.one \
+  -v /home/$USER/.one:/home/ibladmin/.one \
   internationalbrainlab/ibllib
 
 # run  in interactive mode with the volumes mounted
@@ -137,7 +140,7 @@ docker run \
   --rm \
   --name spikesorter \
   -v /mnt/s0:/mnt/s0 \
-  -v /home/$USER/.one:/root/.one \
+  -v /home/$USER/.one:/home/ibladmin/.one \
   -v /mnt/h1:/scratch \  # FIXME this is a parameter
   internationalbrainlab/iblsorter:latest
 ```
