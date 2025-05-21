@@ -1,119 +1,34 @@
-# Ansible playbooks for servers installation
+# On-call cheat-sheet
 
-The playbook are targeted for Ubuntu family machines: Ubuntu and Mint. They may work or not on Debian OS.
-
-TODO: move the documentation to build servers here
-- install the Nvidia driver: we require support for CUDA 12, so the minimum driver is 530.
-- install python (using uv ? )
-- install RAID and create necessary folders
-- install Globus
-- what is the github policy ? Should a dev put a key in each server or we clone in http ? 
+This is a collection of how-to guides for on-call operations on the IBL servers. 
+- For a general description of the architecture, see the [explanations](./docs/architecture.md)
+- For installation instructions see [the installation how-to](./docs/base_containers.md)
+- For more information about the build of base docker images, see [base_containers.md](./docs/base_containers.md)
 
 
-## Install Ansible
-
+## Access the web interface of a local server through mbox
+In your `.ssh/config` set up port-forwarding and hop through mbox:
 ```shell
-sudo apt update
-sudo apt install software-properties-common
-sudo add-apt-repository --yes --update ppa:ansible/ansible
-sudo apt install ansible
-``` 
+Host mbox
+    HostName 18.171.16.87
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/mbox
 
-Clone the IBL sre repository 
-```shell
-mkdir -p ~/Documents/PYTHON
-cd ~/Documents/PYTHON
-git clone https://github.com/int-brain-lab/iblsre.git
+Host mbox-steinmetz
+    User ibladmin
+    ProxyCommand ssh -q mbox nc localhost 6668
+    LocalForward 4200 localhost:4200
 ```
-
-## Install Docker with Support for Nvidia
-
-```shell
-cd ~/Documents/PYTHON/iblsre/servers/ansible
-ansible-playbook docker-nvidia-container-setup.yaml --ask-become-pass
-```
-And then logout and login again.
-
-## Build containers
-The containers are setup with 2 images: a base image that contains all of the heavy lifting installation, and a second image that contains a few copy and git pull instructions to update the containers.
-The idea is to be able to re-build and manipulate often only the small top layers for python code updates and canaries, while the heavy layers containing environments are more stable.
+Once you have successfully run a ssh command, go to [https://localhost:4200](https://localhost:4200)
 
 
-### Build top layers
-```shell
-DOCKER_BUILD_PATH=~/Documents/PYTHON/iblsre/servers/containers
-# builds the DLC container
-docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/dlc:latest -f $DOCKER_BUILD_PATH/Dockerfile_dlc --no-cache
-# builds the IBLLIB container
-docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/ibllib:latest -f $DOCKER_BUILD_PATH/Dockerfile_ibllib --no-cache --build-arg ibllib_branch=prefect
-# builds the IBLSORTER container
-docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:latest  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter --no-cache --build-arg ibllib_branch=prefect
-# builds the PREFECT container
-docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/prefect:latest  -f $DOCKER_BUILD_PATH/Dockerfile_prefect --no-cache
+## Start the Prefect server
 
-# At the end, deploy the flows to prefect and run
-cd ~/Documents/PYTHON/iblsre/servers/containers
-python iblserver_prefect.py   # NB: this needs to be run in the same directory as the script: the relative path of this script needs to be the same as the relative path in each one of the docker containers
-# at last, this is an example to run one of the deployments right away (by default the scheduler)
-prefect deployment run iblsorter-jobs/iblserver-iblsorter-jobs
-```
-
-### Build base images
-Those steps are only necessary when a big change of Python version / OS version / environment is necessary, and is rather infrequent. The builds are meant to run on parede, and the images are pushed to the dockerhub international brain lab repository. 
-
-```shell
-DOCKER_BUILD_PATH=~/Documents/PYTHON/iblsre/servers/containers
-# builds the DLC base container
-docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/dlc_base:latest -f $DOCKER_BUILD_PATH/Dockerfile_dlc_base
-# builds the IBLLIB base container
-docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/ibllib_base:latest -f $DOCKER_BUILD_PATH/Dockerfile_ibllib_base
-# builds the IBLSORTER base container
-docker buildx build $DOCKER_BUILD_PATH --platform linux/amd64 --tag internationalbrainlab/iblsorter_base:latest  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter_base
-```
-
-```shell
-# push all base containers to docker hub
-docker image push internationalbrainlab/ibllib_base:latest
-docker image push internationalbrainlab/iblsorter_base:latest
-docker image push internationalbrainlab/dlc_base:latest
-```
-
-## Install the Pipeline (only once)
-Pre-requisistes
-TODO CRITICAL: install prefect and **configure concurrency** as an ansible workflow
-TODO: recover docker logs in prefect 
-TODO: procedure for canary and update
-TODO: add containers for suite2p, litpose
-TODO: install prefect in ibllib environment. Should this be a separate env ? 
-
-Big todo: try using dask runner to exploit multi-processing https://docs.prefect.io/integrations/prefect-dask
-
-
-```shell
-sudo systemctl stop ibl_large_jobs
-sudo systemctl stop ibl_other_jobs
-sudo systemctl disable ibl_large_jobs
-sudo systemctl disable ibl_other_jobs
-# also remove service files ? 
-```
-This only needs to happen once, has docker compose will restart after each reboot
-
-```shell
-# first start the dockerized prefect server
-mkdir /mnt/s0/logs
-cd ~/Documents/PYTHON/iblsre/servers
-docker compose up -d
-# then create the workpool locally
-iblscripts
-prefect work-pool create --type docker iblserver-docker-pool
-prefect concurrency-limit  create gpu 1
-prefect concurrency-limit  create large_jobs 3
-prefect concurrency-limit  create small_jobs 6
-```
-
-## Start the Prefect server and the
 TODO move from tmux to a service for the worker.
 TODO reset all concurrency slots on a hard reboot
+
+On the local server.
 ```shell
 tmux new -s prefect
 iblcripts
@@ -122,8 +37,29 @@ python iblserver_prefect.py --scratch_directory /mnt/h0
 prefect worker start --pool iblserver-docker-pool
 ```
 
-## Cheat sheet
-#TODO: show how to have /mnt/s0 volumes in docker shell, maybe using compose, or by adding the options to the docker run call
+## Update the code versions - create a canary
+
+To update the codebase for one of the deployments or put one of the deployments on a canary, you have to build the top layer image using the `ibllib_branch` argument on the corresponding image.
+
+```shell
+DOCKER_BUILD_PATH=~/Documents/PYTHON/iblsre/servers/containers
+# builds the DLC container
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/dlc:latest -f $DOCKER_BUILD_PATH/Dockerfile_dlc --no-cache
+
+# builds the IBLLIB container
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/ibllib:latest -f $DOCKER_BUILD_PATH/Dockerfile_ibllib --no-cache --build-arg ibllib_branch=prefect
+
+# builds the IBLSORTER container
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:latest  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter --no-cache --build-arg ibllib_branch=prefect
+
+# builds the PREFECT container
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/prefect:latest  -f $DOCKER_BUILD_PATH/Dockerfile_prefect --no-cache
+```
+
+
+## Acess a development environment for troubleshooting
+TODO: should we put those commands available in the bashrc file ? 
+### ibllib
 ```shell
 # ibllib in interactive mode
 docker run \
@@ -133,7 +69,11 @@ docker run \
   -v /mnt/s0:/mnt/s0 \
   -v /home/$USER/.one:/home/ibladmin/.one \
   internationalbrainlab/ibllib
+```
 
+### iblsorter
+```shell
+SCRATCH_DIR=/mnt/h1
 # run  in interactive mode with the volumes mounted
 docker run \
   -it \
@@ -141,7 +81,18 @@ docker run \
   --name spikesorter \
   -v /mnt/s0:/mnt/s0 \
   -v /home/$USER/.one:/home/ibladmin/.one \
-  -v /mnt/h1:/scratch \
+  -v $SCRATCH_DIR:/scratch \
   internationalbrainlab/iblsorter:latest
 ```
 
+### dlc
+```shell
+# ibllib in interactive mode
+docker run \
+  -it \
+  --rm \
+  --name ibllib \
+  -v /mnt/s0:/mnt/s0 \
+  -v /home/$USER/.one:/home/ibladmin/.one \
+  internationalbrainlab/dlc
+```
