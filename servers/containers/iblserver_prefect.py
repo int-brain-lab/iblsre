@@ -9,6 +9,7 @@ import traceback
 import datetime
 import logging
 from pathlib import Path
+import subprocess
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -256,6 +257,10 @@ def create_jobs():
     print('Clean up')
     asyncio.run(delete_short_runs())
     asyncio.run(delete_cancelled_runs())
+    # also remove all dangling containers older than one week
+    command = ["docker", "container", "prune", "--filter", "until=168h", "--force"]
+    subprocess.run(command, capture_output=True, text=True, check=True)
+    print('Pruned containers older than a week')
 
 
 class CommandLineArguments(BaseSettings, cli_parse_args=True):

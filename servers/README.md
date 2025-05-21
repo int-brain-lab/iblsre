@@ -45,9 +45,9 @@ DOCKER_BUILD_PATH=~/Documents/PYTHON/iblsre/servers/containers
 # builds the DLC container
 docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/dlc:latest -f $DOCKER_BUILD_PATH/Dockerfile_dlc --no-cache
 # builds the IBLLIB container
-docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/ibllib:latest -f $DOCKER_BUILD_PATH/Dockerfile_ibllib --no-cache
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/ibllib:latest -f $DOCKER_BUILD_PATH/Dockerfile_ibllib --no-cache --build-arg ibllib_branch=prefect
 # builds the IBLSORTER container
-docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:latest  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter --no-cache
+docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:latest  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter --no-cache --build-arg ibllib_branch=prefect
 # builds the PREFECT container
 docker buildx build $DOCKER_BUILD_PATH --pull --platform linux/amd64 --tag internationalbrainlab/prefect:latest  -f $DOCKER_BUILD_PATH/Dockerfile_prefect --no-cache
 
@@ -141,7 +141,7 @@ docker run \
   --name spikesorter \
   -v /mnt/s0:/mnt/s0 \
   -v /home/$USER/.one:/home/ibladmin/.one \
-  -v /mnt/h1:/scratch \  # FIXME this is a parameter
+  -v /mnt/h1:/scratch \
   internationalbrainlab/iblsorter:latest
 ```
 

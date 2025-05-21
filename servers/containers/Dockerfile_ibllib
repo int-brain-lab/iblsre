@@ -1,11 +1,13 @@
 FROM internationalbrainlab/ibllib_base:latest
 
 ENV TQDM_DISABLE=1
+# will use the prefect branch by default
+ARG ibllib_branch=prefect
 
 WORKDIR /home/ibladmin/Documents/PYTHON
 
 RUN git -C ./ibllib pull
-RUN git -C ./ibllib checkout prefect
+RUN git -C ./ibllib checkout -b ${ibllib_branch}
 RUN pip install -e ./ibllib
 
 WORKDIR /home/ibladmin/Documents/PYTHON/prefect

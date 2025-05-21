@@ -1,5 +1,7 @@
 FROM internationalbrainlab/iblsorter_base:latest
 
+ARG ibllib_branch=prefect
+
 ENV TQDM_DISABLE=1
 ENV DART_SIGNALS_DISABLE=0
 ENV MKL_SERVICE_FORCE_INTEL=1
@@ -9,8 +11,8 @@ WORKDIR /home/ibladmin/Documents/PYTHON
 
 RUN git -C ./ibl-sorter pull
 RUN git -C ./ibllib pull
-RUN git -C ./ibllib checkout prefect
-RUN git -C ./ibllib rev-parse HEAD
+RUN git -C ./ibllib checkout -b ${ibllib_branch}
+RUN pip install -e ./ibllib
 
 WORKDIR /home/ibladmin/Documents/PYTHON/prefect
 ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py
