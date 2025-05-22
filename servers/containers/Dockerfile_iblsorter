@@ -1,6 +1,6 @@
 FROM internationalbrainlab/iblsorter_base:latest
 
-ARG ibllib_branch=prefect
+ARG ibllib_branch=master
 
 ENV TQDM_DISABLE=1
 ENV DART_SIGNALS_DISABLE=0
@@ -9,10 +9,12 @@ ENV MKL_THREADING_LAYER=GNU
 
 WORKDIR /home/ibladmin/Documents/PYTHON
 
-RUN git -C ./ibl-sorter pull
-RUN git -C ./ibllib pull
-RUN git -C ./ibllib checkout -b ${ibllib_branch}
+RUN git -C ./ibllib pull origin ${ibllib_branch}
+RUN git -C ./ibllib checkout ${ibllib_branch}
 RUN pip install -e ./ibllib
+
+RUN git -C ./ibl-sorter pull
+
 
 WORKDIR /home/ibladmin/Documents/PYTHON/prefect
 ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py

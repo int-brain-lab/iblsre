@@ -2,10 +2,13 @@ FROM internationalbrainlab/dlc_base:latest
 
 ENV TQDM_DISABLE=1
 
+ARG ibllib_branch=master
+
 WORKDIR /home/ibladmin/Documents/PYTHON
 
-RUN git -C ./ibllib pull
-RUN git -C ./ibllib checkout prefect
+RUN git -C ./ibllib pull origin ${ibllib_branch}
+RUN git -C ./ibllib checkout ${ibllib_branch}
+RUN pip install -e ./ibllib
 
 RUN git clone --depth 1 --single-branch --branch master https://github.com/int-brain-lab/iblvideo.git
 ENV PYTHONPATH=/home/ibladmin/Documents/PYTHON/iblvideo

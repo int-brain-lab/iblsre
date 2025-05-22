@@ -2,7 +2,7 @@ FROM internationalbrainlab/ibllib_base:latest
 
 ENV TQDM_DISABLE=1
 # will use the prefect branch by default
-ARG ibllib_branch=prefect
+ARG ibllib_branch=master
 
 WORKDIR /home/ibladmin/Documents/PYTHON
 

@@ -2,8 +2,12 @@ FROM internationalbrainlab/ibllib_base:latest
 
 WORKDIR /home/ibladmin/Documents/PYTHON
 
-RUN git -C ./ibllib pull
-RUN git -C ./ibllib checkout prefect
+# will use the master branch by default
+ARG ibllib_branch=master
+
+RUN git -C ./ibllib pull origin ${ibllib_branch}
+RUN git -C ./ibllib checkout ${ibllib_branch}
+RUN pip install -e ./ibllib
 
 WORKDIR /home/ibladmin/Documents/PYTHON/prefect
 ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py
