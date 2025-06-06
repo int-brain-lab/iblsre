@@ -9,8 +9,9 @@ ENV MKL_THREADING_LAYER=GNU
 
 WORKDIR /home/ibladmin/Documents/PYTHON
 
-RUN git -C ./ibllib pull origin ${ibllib_branch}
-RUN git -C ./ibllib checkout ${ibllib_branch}
+RUN git -C ./ibl-sorter pull
+RUN git -C ./ibllib fetch origin ${ibllib_branch}
+RUN git -C ./ibllib checkout -B ${ibllib_branch} origin/${ibllib_branch}
 RUN pip install -e ./ibllib
 
 RUN git -C ./ibl-sorter pull

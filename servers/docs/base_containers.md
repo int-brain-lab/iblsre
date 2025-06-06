@@ -2,6 +2,7 @@
 
 Those containers only need building when a big change of Python version / OS version / environment is necessary, and is rather infrequent.
 The builds are meant to run on parede, and the images are pushed to the dockerhub international brain lab repository. 
+The environments are non-trivial to solve, and it is not guaranteed that those dockerfiles will build in the future.
 
 
 ## ibllib

@@ -6,8 +6,8 @@ ARG ibllib_branch=master
 
 WORKDIR /home/ibladmin/Documents/PYTHON
 
-RUN git -C ./ibllib pull origin ${ibllib_branch}
-RUN git -C ./ibllib checkout ${ibllib_branch}
+RUN git -C ./ibllib fetch origin ${ibllib_branch}
+RUN git -C ./ibllib checkout -B ${ibllib_branch} origin/${ibllib_branch}
 RUN pip install -e ./ibllib
 
 WORKDIR /home/ibladmin/Documents/PYTHON/prefect

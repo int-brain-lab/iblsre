@@ -33,7 +33,7 @@ RUN mkdir -p /home/ibladmin/Documents/PYTHON
 WORKDIR /home/ibladmin/Documents/PYTHON
 
 # install iblsorter
-RUN conda install -c conda-forge cupy
+RUN conda install -c conda-forge cupy cuda-version=12.4
 
 RUN git clone -b aws https://github.com/int-brain-lab/ibl-sorter.git
 RUN git clone -b develop https://github.com/int-brain-lab/ibllib.git
