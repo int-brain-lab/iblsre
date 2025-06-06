@@ -10,5 +10,10 @@ RUN git -C ./ibllib fetch origin ${ibllib_branch}
 RUN git -C ./ibllib checkout -B ${ibllib_branch} origin/${ibllib_branch}
 RUN pip install -e ./ibllib
 
+# adding functionality to debug inside container
+RUN pip install debugpy
+# Expose the debug port
+EXPOSE 5678
+
 WORKDIR /home/ibladmin/Documents/PYTHON/prefect
 ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py
