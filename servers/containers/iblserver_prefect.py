@@ -198,7 +198,7 @@ def _get_jobs(mode, env=(None,), max_tasks=MAX_TASKS):
         extra_tags = []
         if tdict['gpu'] > 0:
             extra_tags.append('gpu')
-        job_name = f"{session_path.relative_to(subjects_path)} {tdict['name']}"
+        job_name = f"{session_path.relative_to(subjects_path)} {tdict['name']} {tdict['id']}"
         _logger.info(f"Submitting task {job_name}")
         dynamic_task = task(
             name=job_name,
