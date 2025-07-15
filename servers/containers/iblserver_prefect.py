@@ -14,7 +14,7 @@ import subprocess
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-from prefect import flow, task, deploy, get_client
+import prefect
 from prefect.client.schemas.objects import ConcurrencyLimitConfig, ConcurrencyLimitStrategy
 from prefect.client.schemas.filters import FlowRunFilter
 
@@ -34,7 +34,7 @@ subjects_path = Path('/mnt/s0/Data/Subjects/')
 
 
 async def delete_cancelled_runs(max_duration_seconds=20):
-    async with get_client() as client:
+    async with prefect.get_client() as client:
         # Fetch completed flow runs
         flow_runs = await client.read_flow_runs(
             flow_run_filter=FlowRunFilter(
@@ -47,7 +47,7 @@ async def delete_cancelled_runs(max_duration_seconds=20):
 
 
 async def delete_short_runs(max_duration_seconds=20):
-    async with get_client() as client:
+    async with prefect.get_client() as client:
         # Fetch completed flow runs
         flow_runs = await client.read_flow_runs(
             flow_run_filter=FlowRunFilter(
@@ -200,7 +200,7 @@ def _get_jobs(mode, env=(None,), max_tasks=MAX_TASKS):
             extra_tags.append('gpu')
         job_name = f"{session_path.relative_to(subjects_path)} {tdict['name']}"
         _logger.info(f"Submitting task {job_name}")
-        dynamic_task = task(
+        dynamic_task = prefect.task(
             name=job_name,
             tags=[f"{mode}_jobs"] + extra_tags,
             )(run_alyx_task)
@@ -230,27 +230,27 @@ def list_available_envs(root=Path.home() / 'Documents/PYTHON/envs'):
         return [None]
 
 
-@flow(log_prints=True)
+@prefect.flow(log_prints=True)
 def small_jobs():
     for future in _get_jobs(mode='small', max_tasks=120):
         future.wait()
 
-@flow(log_prints=True)
+@prefect.flow(log_prints=True)
 def large_jobs():
     for future in _get_jobs(mode='large', max_tasks=25):
         future.wait()
 
-@flow(log_prints=True)
+@prefect.flow(log_prints=True)
 def iblsorter_jobs():
     for future in _get_jobs(mode='large', env=['iblsorter'], max_tasks=1):
         future.wait()
 
-@flow(log_prints=True)
+@prefect.flow(log_prints=True)
 def video_jobs():
     for future in _get_jobs(mode='large', env=['dlc'], max_tasks=1):
         future.wait()
 
-@flow(log_prints=True)
+@prefect.flow(log_prints=True)
 def create_jobs():
     print('starting job creation task')
     run_job_creator_task()
@@ -294,7 +294,7 @@ if __name__ == "__main__":
         build=False,
     )
 
-    deploy(
+    prefect.deploy(
         create_jobs.to_deployment(
             name="iblserver-create-jobs",
             job_variables=kwargs_job_variables,
@@ -325,7 +325,7 @@ if __name__ == "__main__":
         image="internationalbrainlab/ibllib:latest",
         **kwargs_deploy
     )
-    deploy(
+    prefect.deploy(
         iblsorter_jobs.to_deployment(
             name='iblserver-iblsorter-jobs',
             job_variables=kwargs_job_variables,
@@ -338,7 +338,7 @@ if __name__ == "__main__":
         image="internationalbrainlab/iblsorter:latest",
         **kwargs_deploy
         )
-    deploy(
+    prefect.deploy(
         video_jobs.to_deployment(
             name='iblserver-dlc-jobs',
             job_variables=kwargs_job_variables,
