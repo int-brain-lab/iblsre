@@ -17,6 +17,7 @@ from pydantic_settings import BaseSettings
 import prefect
 from prefect.client.schemas.objects import ConcurrencyLimitConfig, ConcurrencyLimitStrategy
 from prefect.client.schemas.filters import FlowRunFilter
+from prefect_dask import DaskTaskRunner
 
 from one.api import ONE
 from one.webclient import AlyxClient
@@ -234,31 +235,31 @@ def list_available_envs(root=Path.home() / "Documents/PYTHON/envs"):
         return [None]
 
 
-@prefect.flow(log_prints=True)
+@prefect.flow(log_prints=True, task_runner=DaskTaskRunner)
 def small_jobs():
     for future in _get_jobs(mode="small", max_tasks=120):
         future.wait()
 
 
-@prefect.flow(log_prints=True)
+@prefect.flow(log_prints=True, task_runner=DaskTaskRunner)
 def large_jobs():
     for future in _get_jobs(mode="large", max_tasks=25):
         future.wait()
 
 
-@prefect.flow(log_prints=True)
+@prefect.flow(log_prints=True, task_runner=DaskTaskRunner)
 def iblsorter_jobs():
     for future in _get_jobs(mode="large", env=["iblsorter"], max_tasks=1):
         future.wait()
 
 
-@prefect.flow(log_prints=True)
+@prefect.flow(log_prints=True, task_runner=DaskTaskRunner)
 def video_jobs():
     for future in _get_jobs(mode="large", env=["dlc"], max_tasks=1):
         future.wait()
 
 
-@prefect.flow(log_prints=True)
+@prefect.flow(log_prints=True, task_runner=DaskTaskRunner)
 def create_jobs():
     print("starting job creation task")
     run_job_creator_task()
