@@ -28,7 +28,7 @@ from ibllib.pipes.base_tasks import Task
 
 MAX_TASKS = 10
 _logger = logging.getLogger('ibllib')
-subjects_path = Path('/mnt/s0/Data/Subjects/')
+SUBJECTS_PATH = Path('/mnt/s0/Data/Subjects/')
 
 
 
@@ -80,7 +80,7 @@ class JobCreator(Task):
         """
         self.subjects_path = subjects_path
         self.pipes = []
-        super().__init__(None, **kwargs)
+        super().__init__(subjects_path, **kwargs)
 
     def _run(self):
         # Label the lab endpoint json field with health indicators
@@ -122,7 +122,7 @@ def get_repo_from_endpoint_id(endpoint=None, alyx=None):
         return repo[0]['name']
 
 
-def run_job_creator_task(one=None, data_repository_name=None, root_path=subjects_path):
+def run_job_creator_task(one=None, data_repository_name=None, root_path=None):
     """Run the JobCreator task.
 
     Parameters
@@ -140,6 +140,8 @@ def run_job_creator_task(one=None, data_repository_name=None, root_path=subjects
     JobCreator
         The run JobCreator task.
     """
+    root_path = root_path if root_path is not None else SUBJECTS_PATH
+
     one = one or ONE(cache_rest=None, mode='remote')
     data_repository_name = data_repository_name or get_repo_from_endpoint_id(alyx=one.alyx)
     tasks = one.alyx.rest(
@@ -182,7 +184,7 @@ def _get_jobs(mode, env=(None,), max_tasks=MAX_TASKS):
         # Often they are from the same session, so we cache the session path between tasks
         if last_session != tdict['session']:
             ses = one.alyx.rest('sessions', 'list', django=f"pk,{tdict['session']}")[0]
-            session_path = Path(subjects_path).joinpath(
+            session_path = Path(SUBJECTS_PATH).joinpath(
                 ses['subject'], ses['start_time'][:10], str(ses['number']).zfill(3))
             last_session = tdict['session']
         # Here we also want to make sure the task has no missing dependency
@@ -198,7 +200,7 @@ def _get_jobs(mode, env=(None,), max_tasks=MAX_TASKS):
         extra_tags = []
         if tdict['gpu'] > 0:
             extra_tags.append('gpu')
-        job_name = f"{session_path.relative_to(subjects_path)} {tdict['name']}"
+        job_name = f"{session_path.relative_to(SUBJECTS_PATH)} {tdict['name']}"
         _logger.info(f"Submitting task {job_name}")
         dynamic_task = task(
             name=job_name,
