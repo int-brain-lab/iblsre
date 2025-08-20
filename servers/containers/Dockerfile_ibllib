@@ -9,6 +9,7 @@ WORKDIR /home/ibladmin/Documents/PYTHON
 RUN git -C ./ibllib fetch origin ${ibllib_branch}
 RUN git -C ./ibllib checkout -B ${ibllib_branch} origin/${ibllib_branch}
 RUN pip install -e ./ibllib
+RUN pip install -U iblutil
 
 WORKDIR /home/ibladmin/Documents/PYTHON/prefect
 ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py
