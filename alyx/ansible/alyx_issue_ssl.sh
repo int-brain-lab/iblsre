@@ -10,8 +10,8 @@ if [ "$APACHE_SERVER_NAME" = "localhost" ]; then
     exit 0
 fi
 
-# Fist check if the certificate files exist
-if { [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/privkey.pem ]; } && [ -n "$CERTBOT_SG" ]; then
+# First check if the certificate files exist
+if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/privkey.pem ]; then
     echo "SSL certificate files do not exist. Proceeding with certificate generation"
     # To get apache running for the certbot challenge we first create a temporary self-signed certificate
     echo "Generating self-signed SSL certificate for $APACHE_SERVER_NAME"
@@ -22,12 +22,16 @@ if { [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f 
         -out /etc/letsencrypt/live/$APACHE_SERVER_NAME/apache-selfsigned.crt \
         -subj "/C=GB/ST=London/L=London/O=IBL/OU=IT/CN=${APACHE_SERVER_NAME}" &&
 
-    # Start apache server
-    apache2ctl start
-    rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME
-    # Generate a new SSL certificate using certbot
-    /bin/bash /home/iblalyx/crons/renew_docker_certs.sh
-    
-    # Restart apache server to apply the new certificate (NB: server started by docker-compose)
-    apache2ctl stop
+    if [ -n "$CERTBOT_SG" ]; then
+        # Start apache server
+        apache2ctl start
+        rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME
+
+        # Generate a new SSL certificate using certbot
+        /bin/bash /home/iblalyx/crons/renew_docker_certs.sh
+
+        # Restart apache server to apply the new certificate (NB: server started by docker-compose)
+        apache2ctl stop
+    fi
+
 fi
