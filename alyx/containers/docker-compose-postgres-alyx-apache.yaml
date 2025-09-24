@@ -13,9 +13,11 @@ services:
                /bin/bash /home/iblalyx/deploy/alyx_issue_ssl.sh &&
                /usr/sbin/apache2ctl -DFOREGROUND"
     restart: always
+    environment:
+      APACHE_LOG_DIR: /var/log/apache2
     volumes:
       - /etc/letsencrypt/live/${APACHE_SERVER_NAME}:/etc/letsencrypt/live/${APACHE_SERVER_NAME}
-      - ${APACHE_LOG_DIR_HOST}:${APACHE_LOG_DIR}
+      - ${APACHE_LOG_DIR}:/var/log/apache2
       - ${DJANGO_MEDIA_ROOT:-~/uploaded}:/var/www/alyx/alyx/uploaded
     depends_on:
       - postgres

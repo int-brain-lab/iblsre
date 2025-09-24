@@ -60,13 +60,13 @@ RUN mkdir -p ${APACHE_LOG_DIR} \
     && chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${APACHE_LOG_DIR}
 
 # Apache configs
-COPY apache-conf-alyx /etc/apache2/apache2.conf
-COPY 000-default-conf-alyx /etc/apache2/sites-available/000-default.conf
+COPY apache2.conf /etc/apache2/apache2.conf
+COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY alyx-common.conf /etc/apache2/sites-available/alyx-common.conf
 
 # This should be the same as MEDIA_ROOT in settings-deploy.py (c.f. optional env var DJANGO_MEDIA_ROOT)
 RUN mkdir /var/www/alyx/alyx/media
 RUN chown www-data:www-data -fR /var/www/alyx/alyx/media
 
 RUN a2enmod rewrite
-RUN a2enmod ssl
 RUN a2enmod wsgi
