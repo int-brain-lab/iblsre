@@ -29,6 +29,7 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
 
     if [ -n "$CERTBOT_SG" ]; then
         # Start apache server
+        echo "Attempting to renew certificates for $APACHE_SERVER_NAME"
         apache2ctl start
         rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME
 
