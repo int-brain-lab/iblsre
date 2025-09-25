@@ -10,7 +10,7 @@ services:
     env_file: .env
     command: >
       bash -c "python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
-               /bin/bash /home/iblalyx/deploy/alyx_issue_ssl.sh &&
+               /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
                /usr/sbin/apache2ctl -DFOREGROUND"
     restart: always
     environment:

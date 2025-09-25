@@ -8,6 +8,11 @@ if [ "$APACHE_SERVER_NAME" = "localhost" ]; then
     a2dismod ssl
     echo "Skipping certificate generation for localhost."
     exit 0
+else
+    echo "Enabling SSL module for $APACHE_SERVER_NAME."
+    # Command to enable SSL module
+    a2enmod ssl
+    echo "SSL module enabled for $APACHE_SERVER_NAME."
 fi
 
 # First check if the certificate files exist

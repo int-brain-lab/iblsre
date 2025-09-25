@@ -6,8 +6,6 @@
   vars:
     repo_dir: /home/ubuntu/Documents/PYTHON
     repos:
-      - { name: 'alyx', url: 'https://github.com/cortex-lab/alyx.git', app_repo_version: 'deploy' }
-      - { name: 'iblalyx', url: 'https://github.com/int-brain-lab/iblalyx.git', app_repo_version: 'deploy' }
       - { name: 'iblsre', url: 'https://github.com/int-brain-lab/iblsre.git', app_repo_version: 'main' }
 
   tasks:
