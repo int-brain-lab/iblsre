@@ -1,0 +1,91 @@
+#  ansible-playbook test-deploy-web.yaml
+- name: Test Alyx containers
+  hosts: localhost
+  tasks:
+    - name: Create a temporary directory
+      tempfile:
+        state: directory
+        suffix: _alyx_test
+      register: temp_deploy_dir
+
+    # Copy necessary files to temp directory
+    - name: Copy Docker Compose files to temp directory
+      copy:
+        src: "{{ playbook_dir }}/../deploy-web/{{ item.src }}"
+        dest: "{{ temp_deploy_dir.path }}/{{ item.dest }}"
+      loop:
+        - { src: 'docker-compose.yaml', dest: 'docker-compose.yaml' }
+        - { src: 'template.env', dest: '.env' }
+
+    - name: Debug temp directory path
+      debug:
+        msg: "Temporary directory created at {{ temp_deploy_dir.path }}"
+
+    - name: Update .env file with test values
+      lineinfile:
+        path: "{{ temp_deploy_dir.path }}/.env"
+        regexp: "^{{ item.key }}="
+        line: "{{ item.key }}={{ item.value }}"
+        state: present
+      loop:
+        - { key: "DB_PORT", value: "5445" }
+        - { key: "POSTGRES_PORT", value: "5445" }
+        - { key: "APACHE_SERVER_NAME", value: "localhost" }
+        - { key: "DJANGO_DEBUG", value: "True" }
+        - { key: "APACHE_LOG_DIR", value: "{{ temp_deploy_dir.path }}/logs" }
+    - name: Create Apache log directory
+      file:
+        path: "{{ temp_deploy_dir.path }}/logs"
+        state: directory
+        mode: '0755'
+
+    # Use block/always to ensure cleanup happens
+    - block:
+        - name: Test the deploy-web configuration
+          shell:
+            cmd: docker compose up -d
+            chdir: "{{ temp_deploy_dir.path }}"
+          register: compose_result
+
+        - name: Wait for services to be ready
+          pause:
+            seconds: 4
+
+        - name: Test API endpoint
+          uri:
+            url: "http://localhost"
+            method: GET
+            status_code: 200
+          register: api_response
+
+        - name: Verify Apache is running
+          shell: docker exec alyx_apache service apache2 status
+          register: apache_status
+          failed_when: "'* apache2 is running' not in apache_status.stdout"
+
+        - name: Verify Database connectivity
+          shell: docker exec alyx_apache ./manage.py showmigrations
+          register: django_db_status
+
+      always:
+        - name: Get current user ID
+          command: id -u
+          register: user_id
+          changed_when: false
+
+        - name: Make sure the current user can remove temp dir
+          shell:
+            cmd: docker exec alyx_apache chown -fR  {{ user_id.stdout }}:{{ user_id.stdout }} /var/log/apache2
+
+        - name: Stop containers
+          shell:
+            cmd: docker compose down -v --remove-orphans
+            chdir: "{{ temp_deploy_dir.path }}"
+          ignore_errors: yes  # Ensure this doesn't fail if containers weren't started
+
+    # Clean up temp directory at the end
+    - name: Remove temporary directory
+      file:
+        path: "{{ temp_deploy_dir.path }}"
+        state: absent
+      when: temp_deploy_dir.path is defined

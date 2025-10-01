@@ -53,33 +53,6 @@
         group: www-data
         mode: '0755'
 
-    - name: Copy logrotate config to log directory
-      copy:
-        src: "{{ repo_dir }}/iblalyx/deploy/alyxlogrotate.conf"
-        dest: "{{ log_dir }}/alyxlogrotate.conf"
-        remote_src: yes
-        owner: root
-        group: root
-        mode: '0600'
-
-    - name: Set up crontab
-      cron:
-        name: "{{ item.name }}"
-        minute: "{{ item.minute }}"
-        hour: "{{ item.hour }}"
-        day: "{{ item.day }}"
-        month: "{{ item.month }}"
-        weekday: "{{ item.weekday }}"
-        job: "{{ item.job }}"
-      loop:
-        - name: Rotate logs
-          minute: "0"
-          hour: "10"
-          day: "*"
-          month: "*"
-          weekday: "1"
-          job: "logrotate -vs {{ log_dir }}/logrotate.state {{ log_dir }}/alyxlogrotate.conf"
-
     - name: Add alias to .bashrc
       blockinfile:
         path: /home/ubuntu/.bashrc
