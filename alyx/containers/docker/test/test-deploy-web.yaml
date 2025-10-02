@@ -11,7 +11,7 @@
     # Copy necessary files to temp directory
     - name: Copy Docker Compose files to temp directory
       copy:
-        src: "{{ playbook_dir }}/../deploy-web/{{ item.src }}"
+        src: "{{ playbook_dir }}/../../deploy-web/{{ item.src }}"
         dest: "{{ temp_deploy_dir.path }}/{{ item.dest }}"
       loop:
         - { src: 'docker-compose.yaml', dest: 'docker-compose.yaml' }
@@ -64,6 +64,17 @@
           failed_when: "'* apache2 is running' not in apache_status.stdout"
 
         - name: Verify Database connectivity
+          shell: docker exec alyx_apache  logrotate /etc/logrotate.d/apache2 --verbose --force
+          register: logrotate_status
+
+        - name: Test API endpoint after log rotation
+          uri:
+            url: "http://localhost"
+            method: GET
+            status_code: 200
+          register: api_response
+
+        - name: Rotate logs
           shell: docker exec alyx_apache ./manage.py showmigrations
           register: django_db_status
 

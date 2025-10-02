@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     git \
     libapache2-mod-wsgi-py3 \
     libpq-dev \
+    logrotate \
     python3-certbot-apache \
     software-properties-common \
     vim \
@@ -64,6 +65,9 @@ COPY apache-conf/apache2.conf /etc/apache2/apache2.conf
 COPY apache-conf/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY apache-conf/alyx-common.conf /etc/apache2/sites-available/alyx-common.conf
 COPY apache-conf/logrotate.conf /etc/logrotate.d/apache2
+
+# The logrotate config should have restricted permissions to run
+RUN chmod 600 /etc/logrotate.d/apache2
 
 # Copy scripts folder
 COPY scripts/ /usr/local/bin/
