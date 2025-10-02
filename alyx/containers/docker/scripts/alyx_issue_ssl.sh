@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # This script is used to create a new SSL certificate for the Alyx server if certificates do not exist
 # $APACHE_SERVER_NAME is the hostname, e.g. example.com, sub.example.com, or localhost
 
@@ -23,8 +24,8 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
     # Create directories if they do not exist
     mkdir -p /etc/letsencrypt/live/$APACHE_SERVER_NAME
     openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
-        -keyout /etc/letsencrypt/live/$APACHE_SERVER_NAME/apache-selfsigned.key \
-        -out /etc/letsencrypt/live/$APACHE_SERVER_NAME/apache-selfsigned.crt \
+        -keyout /etc/letsencrypt/live/$APACHE_SERVER_NAME/privkey.pem \
+        -out /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem \
         -subj "/C=GB/ST=London/L=London/O=IBL/OU=IT/CN=${APACHE_SERVER_NAME}" &&
 
     if [ -n "$CERTBOT_SG" ]; then

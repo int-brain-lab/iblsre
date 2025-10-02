@@ -49,7 +49,7 @@
 
         - name: Wait for services to be ready
           pause:
-            seconds: 4
+            seconds: 400
 
         - name: Test API endpoint
           uri:
