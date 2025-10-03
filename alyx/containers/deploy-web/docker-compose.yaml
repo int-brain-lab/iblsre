@@ -1,0 +1,35 @@
+services:
+  alyx_apache:
+    image: internationalbrainlab/alyx_apache:latest
+    container_name: alyx_apache
+    ports:
+      - "8080:8080"
+      - "443:443"
+      - "80:80"
+    env_file: .env
+    command: >
+      bash -c "python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
+               /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
+               chown www-data:www-data -fR 664 /var/log/apache2 &
+               /usr/sbin/apache2ctl -DFOREGROUND"
+    restart: always
+    environment:
+      APACHE_LOG_DIR: /var/log/apache2
+    volumes:
+      - /etc/letsencrypt/live/${APACHE_SERVER_NAME}:/etc/letsencrypt/live/${APACHE_SERVER_NAME}
+      - ${APACHE_LOG_DIR}:/var/log/apache2
+      - ${DJANGO_MEDIA_ROOT:-~/uploaded}:/var/www/alyx/alyx/uploaded
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:17
+    container_name: alyx_postgres
+    env_file: .env
+    volumes:
+      - alyx_postgres:/var/lib/postgresql/data
+    expose:
+      - ${POSTGRES_PORT}
+    environment:
+      PGPORT: ${POSTGRES_PORT}
+volumes:
+  alyx_postgres:
