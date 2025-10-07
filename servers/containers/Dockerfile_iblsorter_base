@@ -1,6 +1,5 @@
-FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
-# FROM  pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-# RUN nvidia-smi  # uncomment to enforce GPU availability during the run
+FROM cupy/cupy:v13.6.0
+# THis container has Cuda 12.4 and python 3.10
 
 ARG UID=1000
 ARG GID=1000
@@ -27,30 +26,33 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # setup default user when enter the container
-RUN chown -fR ibladmin:ibladmin /opt/conda
 USER ${UID}:${GID}
 RUN mkdir -p /home/ibladmin/Documents/PYTHON
 WORKDIR /home/ibladmin/Documents/PYTHON
 
 # install iblsorter
-RUN conda install -c conda-forge cupy cuda-version=12.4
+RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124 --no-cache-dir
 
-RUN git clone -b aws https://github.com/int-brain-lab/ibl-sorter.git
+
+RUN git clone -b main https://github.com/int-brain-lab/ibl-sorter.git
 RUN git clone -b develop https://github.com/int-brain-lab/ibllib.git
 RUN git clone https://github.com/int-brain-lab/iblscripts.git
 RUN git clone -b iblsorter https://github.com/int-brain-lab/dartsort.git
 RUN git clone -b v0.2.2 https://github.com/evarol/dredge.git
 
 # RUN pip install cupy-cuda12x
-RUN pip install -r ibl-sorter/requirements.txt
-RUN pip install -r dartsort/requirements-full.txt
-RUN pip install -r dredge/requirements.txt
-RUN pip install -e ./ibl-sorter
-RUN pip install -e ./dartsort
-RUN pip install -e ./dredge
-RUN pip install h5py
-RUN pip install hdbscan
-RUN pip install ipython
+RUN pip install -r ibl-sorter/requirements.txt --no-cache-dir
+RUN pip install -r dartsort/requirements-full.txt --no-cache-dir
+RUN pip install -r dredge/requirements.txt --no-cache-dir
+RUN pip install -e ./ibl-sorter --no-cache-dir
+RUN pip install -e ./dartsort --no-cache-dir
+RUN pip install -e ./dredge --no-cache-dir
+RUN pip install h5py --no-cache-dir
+RUN pip install hdbscan --no-cache-dir
+RUN pip install ipython --no-cache-dir
 RUN pip uninstall -y ibllib
-RUN pip install -e ./ibllib
-RUN pip install prefect
+RUN pip install -e ./ibllib --no-cache-dir
+RUN pip install prefect --no-cache-dir
+
+# Add /home/ibladmin/.local/bin to PATH
+ENV PATH="/home/ibladmin/.local/bin:${PATH}"
