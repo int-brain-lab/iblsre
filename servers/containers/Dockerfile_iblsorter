@@ -1,7 +1,8 @@
+# docker buildx build . --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:1.12  -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter --no-cache --build-arg ibllib_branch=prefect
 FROM internationalbrainlab/iblsorter_base:latest
 
 ARG ibllib_branch=master
-
+ARG iblsorter_version=1.12.0
 ENV TQDM_DISABLE=1
 ENV DART_SIGNALS_DISABLE=0
 ENV MKL_SERVICE_FORCE_INTEL=1
@@ -9,12 +10,14 @@ ENV MKL_THREADING_LAYER=GNU
 
 WORKDIR /home/ibladmin/Documents/PYTHON
 
-RUN git -C ./ibl-sorter pull
+# Pull a specific tag for ibl-sorter
+RUN git -C ./ibl-sorter fetch --tags
+RUN git -C ./ibl-sorter checkout ${iblsorter_version}
+
 RUN git -C ./ibllib fetch origin ${ibllib_branch}
 RUN git -C ./ibllib checkout -B ${ibllib_branch} origin/${ibllib_branch}
 RUN pip install -e ./ibllib
-
-RUN git -C ./ibl-sorter pull
+RUN pip install -e ./ibl-sorter
 
 
 WORKDIR /home/ibladmin/Documents/PYTHON/prefect
