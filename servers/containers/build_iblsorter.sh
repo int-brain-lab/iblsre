@@ -7,6 +7,13 @@ IBLSORTER_VERSION=1.12
 IBLLIB_BRANCH=prefect
 SCRATCH_DIR=/home/$USER/scratch
 
+# Load environment variables from .env file if it exists
+if [ -f "$(dirname "$0")/.env" ]; then
+  set -a # automatically export all variables
+  source "$(dirname "$0")/.env"
+  set +a # stop automatically exporting
+fi
+
 # build the base version of the image (this is quite long)
 docker buildx build $DOCKER_BUILD_PATH \
   --platform linux/amd64 \
@@ -17,7 +24,8 @@ docker buildx build $DOCKER_BUILD_PATH \
 # build the head version of the container
 docker buildx build $DOCKER_BUILD_PATH \
 	--platform linux/amd64 \
-	--tag internationalbrainlab/iblsorter_cuda${CUDA_MAJOR_VERSION}:${IBLSORTER_VERSION} \
+	--tag internationalbrainlab/iblsorter:${IBLSORTER_VERSION} \
+	--tag internationalbrainlab/iblsorter:latest \
   -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter \
   --no-cache \
   --build-arg ibllib_branch=${IBLLIB_BRANCH}
@@ -28,5 +36,5 @@ docker run \
   --name spikesorter \
   -v /mnt/s0:/mnt/s0 \
   -v /home/$USER/.one:/home/ibladmin/.one \
-  -v ${SCRATCH_DIR}:/scratch internationalbrainlab/iblsorter_cuda${CUDA_MAJOR_VERSION}:${IBLSORTER_VERSION}
+  -v ${SCRATCH_DIR}:/scratch internationalbrainlab/iblsorter_cuda${CUDA_MAJOR_VERSION}:${IBLSORTER_VERSION} \
   /bin/bash iblsorter-test
