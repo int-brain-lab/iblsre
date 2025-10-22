@@ -1,5 +1,28 @@
-FROM cupy/cupy:v13.6.0
-# THis container has Cuda 12.4 and python 3.10
+# This Dockerfile uses a multi-stage build to select a base image based on the CUDA_MAJOR_VERSION argument.
+#
+# Build for CUDA 11 (default):
+# docker buildx build . -f Dockerfile_iblsorter_base_torch -t iblsorter_base:cuda11
+# Build for CUDA 12:
+# docker buildx build . -f Dockerfile_iblsorter_base_torch --build-arg CUDA_MAJOR_VERSION=12 -t iblsorter_base:cuda12
+# Build for CUDA 13:
+# docker buildx build . -f Dockerfile_iblsorter_base_torch --build-arg CUDA_MAJOR_VERSION=13 -t iblsorter_base:cuda13
+
+ARG CUDA_MAJOR_VERSION=12
+
+# --- Base image definitions ---
+# Define a stage for each possible base image and set the corresponding full CUDA version.
+FROM pytorch/pytorch:2.7.1-cuda11.8-cudnn9-runtime as base-cuda11
+ARG CUDA_VERSION=11.8
+
+FROM pytorch/pytorch:2.9.0-cuda12.8-cudnn9-runtime as base-cuda12
+ARG CUDA_VERSION=12.8
+
+FROM pytorch/pytorch:2.9.0-cuda13.0-cudnn9-runtime as base-cuda13
+ARG CUDA_VERSION=13.0
+
+# --- Common build steps ---
+# This stage will be based on the selected CUDA version
+FROM base-cuda${CUDA_MAJOR_VERSION} as builder
 
 ARG UID=1000
 ARG GID=1000
@@ -26,13 +49,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # setup default user when enter the container
+RUN conda install -c conda-forge cupy cuda-version=${CUDA_VERSION}
+
 USER ${UID}:${GID}
 RUN mkdir -p /home/ibladmin/Documents/PYTHON
 WORKDIR /home/ibladmin/Documents/PYTHON
-
-# install iblsorter
-RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124 --no-cache-dir
-
 
 RUN git clone -b main https://github.com/int-brain-lab/ibl-sorter.git
 RUN git clone -b develop https://github.com/int-brain-lab/ibllib.git
@@ -40,7 +61,6 @@ RUN git clone https://github.com/int-brain-lab/iblscripts.git
 RUN git clone -b iblsorter https://github.com/int-brain-lab/dartsort.git
 RUN git clone -b v0.2.2 https://github.com/evarol/dredge.git
 
-# RUN pip install cupy-cuda12x
 RUN pip install -r ibl-sorter/requirements.txt --no-cache-dir
 RUN pip install -r dartsort/requirements-full.txt --no-cache-dir
 RUN pip install -r dredge/requirements.txt --no-cache-dir
@@ -54,5 +74,4 @@ RUN pip uninstall -y ibllib
 RUN pip install -e ./ibllib --no-cache-dir
 RUN pip install prefect --no-cache-dir
 
-# Add /home/ibladmin/.local/bin to PATH
 ENV PATH="/home/ibladmin/.local/bin:${PATH}"

@@ -1,5 +1,6 @@
 # docker buildx build . --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:1.12  -f Dockerfile_iblsorter --no-cache --build-arg ibllib_branch=prefect
-FROM internationalbrainlab/iblsorter_base:latest
+ARG CUDA_MAJOR_VERSION=cuda12
+FROM internationalbrainlab/iblsorter_base:cuda${CUDA_MAJOR_VERSION}
 
 ARG ibllib_branch=master
 ARG iblsorter_version=1.12.0
@@ -11,7 +12,7 @@ ENV MKL_THREADING_LAYER=GNU
 WORKDIR /home/ibladmin/Documents/PYTHON
 
 # Pull a specific tag for ibl-sorter
-RUN git -C ./ibl-sorter fetch --tags
+RUN git -C ./ibl-sorter fetch --tags --force
 RUN git -C ./ibl-sorter checkout ${iblsorter_version}
 
 RUN git -C ./ibllib fetch origin ${ibllib_branch}
