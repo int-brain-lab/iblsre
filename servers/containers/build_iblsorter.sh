@@ -28,7 +28,9 @@ docker buildx build $DOCKER_BUILD_PATH \
 	--tag internationalbrainlab/iblsorter:latest \
   -f $DOCKER_BUILD_PATH/Dockerfile_iblsorter \
   --no-cache \
-  --build-arg ibllib_branch=${IBLLIB_BRANCH}
+  --build-arg ibllib_branch=${IBLLIB_BRANCH} \
+  --build-arg CUDA_MAJOR_VERSION=${CUDA_MAJOR_VERSION}
+
 
 docker run \
   -it \

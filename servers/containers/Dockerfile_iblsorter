@@ -1,5 +1,5 @@
 # docker buildx build . --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:1.12  -f Dockerfile_iblsorter --no-cache --build-arg ibllib_branch=prefect
-ARG CUDA_VERSION_TAG=cuda12
+ARG CUDA_MAJOR_VERSION=cuda12
 FROM internationalbrainlab/iblsorter_base:cuda${CUDA_MAJOR_VERSION}
 
 ARG ibllib_branch=master
