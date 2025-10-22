@@ -38,5 +38,5 @@ docker run \
   --name spikesorter \
   -v /mnt/s0:/mnt/s0 \
   -v /home/$USER/.one:/home/ibladmin/.one \
-  -v ${SCRATCH_DIR}:/scratch internationalbrainlab/iblsorter_cuda${CUDA_MAJOR_VERSION}:${IBLSORTER_VERSION} \
+  -v ${SCRATCH_DIR}:/scratch internationalbrainlab/iblsorter:${IBLSORTER_VERSION} \
   /bin/bash iblsorter-test

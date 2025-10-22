@@ -73,3 +73,5 @@ RUN pip install ipython --no-cache-dir
 RUN pip uninstall -y ibllib
 RUN pip install -e ./ibllib --no-cache-dir
 RUN pip install prefect --no-cache-dir
+
+ENV PATH="/home/ibladmin/.local/bin:${PATH}"
