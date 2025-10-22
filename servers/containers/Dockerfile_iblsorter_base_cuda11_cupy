@@ -1,0 +1,60 @@
+FROM cupy/cupy:v12.1.0
+# cupy/cupy:v13.6.0 has Cuda 12.2 and python 3.10
+# cupy/cupy:v12.1.0 has Cuda 11.8 and python 3.10
+
+ARG UID=1000
+ARG GID=1000
+
+# create a new user with same UID & PID but no password
+RUN groupadd --gid ${GID} ibladmin && \
+    useradd --create-home ibladmin --uid=${UID} --gid=${GID} --groups root && \
+    passwd --delete ibladmin
+# add user to the sudo group and set sudo group to no passoword
+RUN apt update && \
+    apt install -y sudo && \
+    adduser ibladmin sudo && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# install system packages and clean-up cache
+RUN apt-get update && apt-get install -y \
+    vim \
+    gcc \
+    git \
+    libfftw3-dev \
+    libfftw3-doc \
+    rsync \
+    && apt-get autoremove \
+    && rm -rf /var/lib/apt/lists/*
+
+# setup default user when enter the container
+USER ${UID}:${GID}
+RUN mkdir -p /home/ibladmin/Documents/PYTHON
+WORKDIR /home/ibladmin/Documents/PYTHON
+
+# install iblsorter
+# RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126 --no-cache-dir
+RUN /usr/bin/python3 -m pip install --upgrade pip
+RUN pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu118
+
+RUN git clone -b main https://github.com/int-brain-lab/ibl-sorter.git
+RUN git clone -b develop https://github.com/int-brain-lab/ibllib.git
+RUN git clone https://github.com/int-brain-lab/iblscripts.git
+RUN git clone -b iblsorter https://github.com/int-brain-lab/dartsort.git
+RUN git clone -b v0.2.2 https://github.com/evarol/dredge.git
+
+# RUN pip install cupy-cuda12x
+RUN pip install -r ibl-sorter/requirements.txt --no-cache-dir
+RUN pip install -r dartsort/requirements-full.txt --no-cache-dir
+RUN pip install -r dredge/requirements.txt --no-cache-dir
+RUN pip install -e ./ibl-sorter --no-cache-dir
+RUN pip install -e ./dartsort --no-cache-dir
+RUN pip install -e ./dredge --no-cache-dir
+RUN pip install h5py --no-cache-dir
+RUN pip install hdbscan --no-cache-dir
+RUN pip install ipython --no-cache-dir
+RUN pip uninstall -y ibllib
+RUN pip install -e ./ibllib --no-cache-dir
+RUN pip install prefect --no-cache-dir
+
+# Add /home/ibladmin/.local/bin to PATH
+ENV PATH="/home/ibladmin/.local/bin:${PATH}"

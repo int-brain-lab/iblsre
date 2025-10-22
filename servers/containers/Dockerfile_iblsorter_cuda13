@@ -1,5 +1,5 @@
 # docker buildx build . --pull --platform linux/amd64 --tag internationalbrainlab/iblsorter:1.12  -f Dockerfile_iblsorter --no-cache --build-arg ibllib_branch=prefect
-FROM internationalbrainlab/iblsorter_base:latest
+FROM internationalbrainlab/iblsorter_base:cuda13
 
 ARG ibllib_branch=master
 ARG iblsorter_version=1.12.0
