@@ -6,24 +6,24 @@ usage() {
   echo "Build Alyx Docker containers"
   echo ""
   echo "Options:"
-  echo "  --top-only    Build only the top layer container"
+  echo "  --base        Build the base layer container as well"
   echo "  -h, --help    Display this help message"
   exit 1
 }
 
 # Parse command line arguments
-TOP_ONLY=false
+BUILD_BASE=false
 while [[ "$#" -gt 0 ]]; do
   case $1 in
-    --top-only) TOP_ONLY=true ;;
+    --base) BUILD_BASE=true ;;
     -h|--help) usage ;;
     *) echo "Unknown parameter: $1"; usage ;;
   esac
   shift
 done
 
-# Build base container if not top-only
-if [ "$TOP_ONLY" = false ]; then
+# Build base container if --base is set
+if [ "$BUILD_BASE" = true ]; then
   echo "Building base container..."
   docker buildx build . \
     --platform linux/amd64 \
