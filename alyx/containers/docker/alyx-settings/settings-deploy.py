@@ -113,7 +113,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.eu-west-2.compute.amazonaws.com']
 if (web_host := os.getenv('APACHE_SERVER_NAME', '0.0.0.0')) is not None:
     ALLOWED_HOSTS.append(web_host)
 CSRF_TRUSTED_ORIGINS = [
-    f"http://{web_host}", f"https://{web_host}", "https://*.internationalbrainlab.org"]
+    f"http://{web_host}", f"https://{web_host}"]
 CSRF_COOKIE_SECURE = True
 
 
