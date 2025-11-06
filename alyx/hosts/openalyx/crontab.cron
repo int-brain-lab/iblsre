@@ -1,0 +1,2 @@
+# every 2 months
+0 0 1 */2 * ~/Documents/PYTHON/iblsre/alyx/hosts/openalyx/02_renew_certificate.sh > /var/log/alyx/02_renew_certificate.log

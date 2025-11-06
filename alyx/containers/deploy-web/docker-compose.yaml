@@ -14,7 +14,9 @@ services:
                /usr/sbin/apache2ctl -DFOREGROUND"
     restart: always
     environment:
-      APACHE_LOG_DIR: /var/log/apache2
+      - APACHE_LOG_DIR=/var/log/apache2
+      - DJANGO_MEDIA_ROOT=${DJANGO_MEDIA_S3:-DJANGO_MEDIA_ROOT}
+      - DJANGO_TABLES_ROOT=${DJANGO_TABLES_S3:-DJANGO_TABLES_ROOT}
     volumes:
       - /etc/letsencrypt/live/${APACHE_SERVER_NAME}:/etc/letsencrypt/live/${APACHE_SERVER_NAME}
       - ${APACHE_LOG_DIR}:/var/log/apache2
