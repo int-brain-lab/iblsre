@@ -32,7 +32,7 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
         # Start apache server
         echo "Attempting to renew certificates for $APACHE_SERVER_NAME"
         apache2ctl start
-        rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME
+        rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME/*
 
         # Generate a new SSL certificate using certbot
         /bin/bash /home/iblalyx/crons/renew_docker_certs.sh
