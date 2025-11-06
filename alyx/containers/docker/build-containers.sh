@@ -37,5 +37,5 @@ docker buildx build . \
   --platform linux/amd64 \
   --tag internationalbrainlab/alyx_apache:latest \
   -f ./Dockerfile \
-  -- pull \
+  --pull \
   --no-cache
