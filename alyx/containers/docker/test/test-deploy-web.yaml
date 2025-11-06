@@ -43,7 +43,7 @@
     - block:
         - name: Test the deploy-web configuration
           shell:
-            cmd: docker compose up -d
+            cmd: docker compose -p test_ansible up -d
             chdir: "{{ temp_deploy_dir.path }}"
           register: compose_result
 
