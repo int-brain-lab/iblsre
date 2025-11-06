@@ -1,3 +1,3 @@
 #!/bin/bash
 set -e
-docker exec -it alyx_apache certbot --apache --noninteractive --agree-tos --email admin@internationalbrainlab.org -d openalyx.internationalbrainlab.org --force-renewal
+docker exec -it alyx_apache certbot --apache --noninteractive --agree-tos --email admin@internationalbrainlab.org -d openalyx.internationalbrainlab.org

@@ -32,13 +32,14 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
         # Start apache server
         echo "Attempting to renew certificates for $APACHE_SERVER_NAME"
         apache2ctl start
-        rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME/*
+        rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME
 
         # Generate a new SSL certificate using certbot
-        /bin/bash /home/iblalyx/crons/renew_docker_certs.sh
+        /bin/bash /home/iblalyx/crons/renew_docker_certs.sh  # TODO issue flag for this script
 
         # Restart apache server to apply the new certificate (NB: server started by docker-compose)
         apache2ctl stop
+    # TODO: else statement for simple issuing where no security group is provided
     fi
 
 fi
