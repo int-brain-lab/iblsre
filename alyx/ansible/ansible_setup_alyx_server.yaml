@@ -69,5 +69,5 @@
         group: "ubuntu"
         mode: '0755'
       loop:
-        - /home/ubuntu/media
+        - /home/ubuntu/uploaded
         - /home/ubuntu/tables
