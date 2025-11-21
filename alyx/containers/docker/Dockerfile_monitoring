@@ -1,0 +1,50 @@
+FROM internationalbrainlab/alyx_apache_base:latest
+
+# Install prometheus exporters and monitoring tools
+RUN apt-get update && apt-get install -y \
+    prometheus-node-exporter \
+    apache2-utils \
+    curl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Django prometheus client
+RUN pip install --no-cache-dir \
+    django-prometheus \
+    prometheus-client \
+    mod-wsgi-metrics
+
+# Copy monitoring-specific settings
+COPY alyx-settings/settings-monitoring.py /var/www/alyx/alyx/alyx/settings.py
+COPY alyx-settings/settings_lab-monitoring.py /var/www/alyx/alyx/alyx/settings_lab.py
+COPY settings_lab-user.py* /var/www/alyx/alyx/alyx/settings_lab.py
+
+# Apache configs for monitoring
+COPY apache-conf-monitoring/000-default-monitoring.conf /etc/apache2/sites-available/000-default.conf
+COPY apache-conf-monitoring/alyx-common-monitoring.conf /etc/apache2/sites-available/alyx-common.conf
+COPY apache-conf-monitoring/apache2-monitoring.conf /etc/apache2/apache2.conf
+
+# Enable Apache status module for metrics
+RUN a2enmod status
+RUN a2enmod info
+
+ARG alyx_branch=master
+ARG iblalyx_branch=main
+
+RUN git -C /var/www/alyx fetch origin ${alyx_branch}
+RUN git -C /var/www/alyx checkout -B ${alyx_branch} origin/${alyx_branch}
+RUN git -C /home/iblalyx fetch origin ${iblalyx_branch}
+RUN git -C /home/iblalyx checkout -B ${iblalyx_branch} origin/${iblalyx_branch}
+
+RUN pip install -r /var/www/alyx/requirements.txt
+
+# Create metrics directory
+RUN mkdir -p /var/www/alyx/metrics && \
+    chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} /var/www/alyx/metrics
+
+WORKDIR /var/www/alyx/alyx
+
+# Expose ports for metrics
+EXPOSE 9090 9113
+
+# the entrypoint here just starts a local development server, this is overriden by the compose file in production
+CMD python /var/www/alyx/alyx/manage.py collectstatic --noinput && python /var/www/alyx/alyx/manage.py runserver 0.0.0.0:8000

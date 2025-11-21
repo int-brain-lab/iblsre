@@ -1,0 +1,56 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Django application metrics
+  - job_name: 'django-alyx'
+    static_configs:
+      - targets: ['alyx_apache_monitoring:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Apache metrics
+  - job_name: 'apache'
+    static_configs:
+      - targets: ['apache_exporter:9117']
+    scrape_interval: 15s
+
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
+    scrape_interval: 15s
+
+  # Node/System metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node_exporter:9100']
+    scrape_interval: 15s
+
+  # WSGI metrics
+  - job_name: 'wsgi'
+    static_configs:
+      - targets: ['alyx_apache_monitoring:80']
+    metrics_path: '/wsgi-metrics'
+    scrape_interval: 15s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Sample alerting rules (uncomment and customize as needed)
+# rule_files:
+#   - "alert_rules.yml"
