@@ -28,18 +28,17 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
         -out /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem \
         -subj "/C=GB/ST=London/L=London/O=IBL/OU=IT/CN=${APACHE_SERVER_NAME}" &&
 
+    echo "Attempting to issue certificates for $APACHE_SERVER_NAME"
+    # Start apache server
+    apache2ctl start
     if [ -n "$CERTBOT_SG" ]; then
-        # Start apache server
-        echo "Attempting to renew certificates for $APACHE_SERVER_NAME"
-        apache2ctl start
         rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME
-
         # Generate a new SSL certificate using certbot
         /bin/bash /home/iblalyx/crons/renew_docker_certs.sh  # TODO issue flag for this script
-
-        # Restart apache server to apply the new certificate (NB: server started by docker-compose)
-        apache2ctl stop
-    # TODO: else statement for simple issuing where no security group is provided
+    else
+        certbot --apache --noninteractive --agree-tos --email $APACHE_SERVER_ADMIN -d $APACHE_SERVER_NAME
     fi
+    # Restart apache server to apply the new certificate (NB: server started by docker-compose)
+    apache2ctl stop
 
 fi
