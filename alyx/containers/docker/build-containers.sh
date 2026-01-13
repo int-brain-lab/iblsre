@@ -28,7 +28,9 @@ if [ "$BUILD_BASE" = true ]; then
   docker buildx build . \
     --platform linux/amd64 \
     --tag internationalbrainlab/alyx_apache_base:latest \
-    -f ./Dockerfile_base
+    -f ./Dockerfile_base \
+    --pull \
+    --no-cache
 fi
 
 echo "Building head container..."
