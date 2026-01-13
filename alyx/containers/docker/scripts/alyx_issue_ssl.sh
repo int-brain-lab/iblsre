@@ -22,24 +22,32 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
     # To get apache running for the certbot challenge we first create a temporary self-signed certificate
     echo "Generating self-signed SSL certificate for $APACHE_SERVER_NAME"
     # Create directories if they do not exist
-    mkdir -p /etc/letsencrypt/live/$APACHE_SERVER_NAME
+    mkdir -p /etc/letsencrypt/live/$APACHE_SERVER_NAME-0001
     openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
-        -keyout /etc/letsencrypt/live/$APACHE_SERVER_NAME/privkey.pem \
-        -out /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem \
+        -keyout /etc/letsencrypt/live/$APACHE_SERVER_NAME-0001/privkey.pem \
+        -out /etc/letsencrypt/live/$APACHE_SERVER_NAME-0001/fullchain.pem \
         -subj "/C=GB/ST=London/L=London/O=IBL/OU=IT/CN=${APACHE_SERVER_NAME}" &&
 
     echo "Attempting to issue certificates for $APACHE_SERVER_NAME"
-    # Start apache server
+    # Start apache server with self-signed certificates
     apache2ctl start
-    # Remove self-signed certificates before generating LetsEncrypt ones
-    rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME
-    # Generate a new SSL certificate using certbot
+    # Generate a new SSL certificate using certbot, which will overwrite the self-signed ones
     if [ -n "$CERTBOT_SG" ]; then  # call script to temporarily remove firewall for certbot challange
         /bin/bash /home/iblalyx/crons/renew_docker_certs.sh  # TODO issue flag for this script
     else
-        certbot --apache --noninteractive --agree-tos --email $APACHE_SERVER_ADMIN -d $APACHE_SERVER_NAME
+        certbot --apache --noninteractive --agree-tos --email $APACHE_SERVER_ADMIN --force-renewal -d $APACHE_SERVER_NAME
     fi
-    # Restart apache server to apply the new certificate (NB: server started by docker-compose)
+    # Assert that the certificate files were created
+    if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/privkey.pem ]; then
+        echo "Error: Certificate generation failed."
+        exit 1
+    fi
+    echo "Certificate generation successful."
+    # Remove the temporary self-signed certificate files if they exist
+    rm -f /etc/letsencrypt/live/$APACHE_SERVER_NAME-0001/
+    rm /etc/letsencrypt/renewal/$APACHE_SERVER_NAME-0001.conf
+
+    # Stop apache server (NB: will be started by docker-compose)
     apache2ctl stop
 
 fi
