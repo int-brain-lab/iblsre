@@ -17,15 +17,13 @@ else
 fi
 
 # First check if the certificate files exist
-if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/privkey.pem ]; then
+if [ ! -f /etc/ssl/certs/alyx_privkey.pem ] || [ ! -f  /etc/ssl/certs/alyx_fullchain.pem ]; then
     echo "SSL certificate files do not exist. Proceeding with certificate generation"
     # To get apache running for the certbot challenge we first create a temporary self-signed certificate
     echo "Generating self-signed SSL certificate for $APACHE_SERVER_NAME"
-    # Create directories if they do not exist
-    mkdir -p /etc/letsencrypt/live/$APACHE_SERVER_NAME-0001
     openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
-        -keyout /etc/letsencrypt/live/$APACHE_SERVER_NAME-0001/privkey.pem \
-        -out /etc/letsencrypt/live/$APACHE_SERVER_NAME-0001/fullchain.pem \
+        -keyout /etc/ssl/certs/alyx_privkey.pem \
+        -out /etc/ssl/certs/alyx_fullchain.pem \
         -subj "/C=GB/ST=London/L=London/O=IBL/OU=IT/CN=${APACHE_SERVER_NAME}" &&
 
     echo "Attempting to issue certificates for $APACHE_SERVER_NAME"
@@ -42,6 +40,10 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
         echo "Error: Certificate generation failed."
         exit 1
     fi
+    rm -f /etc/ssl/certs/alyx_privkey.pem
+    rm -f /etc/ssl/certs/alyx_fullchain.pem
+    ln -s /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem /etc/ssl/certs/alyx_fullchain.pem
+    ln -s /etc/letsencrypt/live/$APACHE_SERVER_NAME/privkey.pem /etc/ssl/certs/alyx_privkey.pem
     echo "Certificate generation successful."
     # Remove the temporary self-signed certificate files if they exist
     rm -f /etc/letsencrypt/live/$APACHE_SERVER_NAME-0001/
