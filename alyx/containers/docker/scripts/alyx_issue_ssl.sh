@@ -31,11 +31,14 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
     echo "Attempting to issue certificates for $APACHE_SERVER_NAME"
     # Start apache server with self-signed certificates
     apache2ctl start
-    # Generate a new SSL certificate using certbot, which will overwrite the self-signed ones
+    sleep 2  # wait for apache to start
+    # Remove self-signed certificates before generating LetsEncrypt ones
+    rm -rf /etc/letsencrypt/live/$APACHE_SERVER_NAME
+    # Generate a new SSL certificate using certbot
     if [ -n "$CERTBOT_SG" ]; then  # call script to temporarily remove firewall for certbot challange
-        /bin/bash /home/iblalyx/crons/renew_docker_certs.sh  # TODO issue flag for this script
+        /bin/bash /home/iblalyx/crons/renew_docker_certs.sh
     else
-        certbot certonly --webroot --webroot-path=/var/www/alyx --noninteractive --agree-tos --email $APACHE_SERVER_ADMIN --force-renewal -d $APACHE_SERVER_NAME
+        certbot certonly --webroot --webroot-path=/var/www/alyx --noninteractive --agree-tos --email $APACHE_SERVER_ADMIN -d $APACHE_SERVER_NAME
     fi
 
     # Stop apache server (NB: will be started by docker-compose)
