@@ -64,7 +64,7 @@ RUN mkdir -p ${APACHE_LOG_DIR} \
 COPY apache-conf/apache2.conf /etc/apache2/apache2.conf
 COPY apache-conf/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY apache-conf/alyx-common.conf /etc/apache2/sites-available/alyx-common.conf
-COPY apache-conf/options-ssl-apache.conf /etc/letsencrypt/options-ssl-apache.conf
+COPY apache-conf/options-ssl-apache.conf /etc/apache2/sites-available/options-ssl-apache.conf
 COPY apache-conf/logrotate.conf /etc/logrotate.d/apache2
 
 # The logrotate config should have restricted permissions to run
