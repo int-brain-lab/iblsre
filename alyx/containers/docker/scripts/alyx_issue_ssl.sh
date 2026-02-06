@@ -8,14 +8,15 @@ if [ "$APACHE_SERVER_NAME" = "localhost" ]; then
     # Command to deactivate SSL module
     a2dismod ssl
     echo "Skipping certificate generation for localhost."
+    # Ensure changes are applied
     exit 0
-else
-    echo "Enabling SSL module for $APACHE_SERVER_NAME."
-    # Command to enable SSL module
-    a2enmod ssl
-    echo "SSL module enabled for $APACHE_SERVER_NAME."
 fi
 
+
+echo "Enabling SSL module for $APACHE_SERVER_NAME."
+# Command to enable SSL module
+a2enmod ssl
+echo "SSL module enabled for $APACHE_SERVER_NAME."
 # First check if the certificate files exist
 if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/privkey.pem ]; then
     echo "SSL certificate files do not exist. Proceeding with certificate generation"
@@ -29,7 +30,7 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
         -subj "/C=GB/ST=London/L=London/O=IBL/OU=IT/CN=${APACHE_SERVER_NAME}" &&
 
     echo "Attempting to issue certificates for $APACHE_SERVER_NAME"
-    # Start apache server with self-signed certificates
+    # Start apache server with self-signed certificates (in background)
     apache2ctl start
     sleep 2  # wait for apache to start
     # Remove self-signed certificates before generating LetsEncrypt ones
@@ -40,8 +41,8 @@ if [ ! -f /etc/letsencrypt/live/$APACHE_SERVER_NAME/fullchain.pem ] || [ ! -f /e
     else
         certbot certonly --webroot --webroot-path=/var/www/alyx --noninteractive --agree-tos --email $APACHE_SERVER_ADMIN -d $APACHE_SERVER_NAME
     fi
-
-    # Stop apache server (NB: will be started by docker-compose)
+    
+    # Stop apache server (will be started by docker-compose with -DFOREGROUND)
     apache2ctl stop
 
 fi
