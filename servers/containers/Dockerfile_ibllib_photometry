@@ -1,0 +1,20 @@
+FROM internationalbrainlab/ibllib_base:latest
+
+ENV TQDM_DISABLE=1
+# will use the prefect branch by default
+ARG ibllib_branch=photometry
+
+WORKDIR /home/ibladmin/Documents/PYTHON
+
+RUN git -C ./ibllib fetch origin ${ibllib_branch}
+RUN git -C ./ibllib checkout -B ${ibllib_branch} origin/${ibllib_branch}
+RUN pip install -e ./ibllib
+
+RUN git -C ./ibl-photometry fetch origin develop
+RUN git -C ./ibl-photometry checkout -B develop origin/develop
+RUN pip install -e ./ibl-photometry
+
+RUN pip install -U iblutil
+
+WORKDIR /home/ibladmin/Documents/PYTHON/prefect
+ADD ./iblserver_prefect.py /home/ibladmin/Documents/PYTHON/prefect/iblserver_prefect.py

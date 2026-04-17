@@ -1,0 +1,16 @@
+{
+    "name": "iblphotometry",
+    "image": "iblphotometry:nextflow",
+    "remoteUser": "ubuntu",
+    "mounts": [
+        "source=/mnt/s0,target=/mnt/s0,type=bind"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.debugpy"
+            ]
+        }
+    }
+}
