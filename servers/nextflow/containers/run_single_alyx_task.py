@@ -70,3 +70,5 @@ if not DRY:
             sys.exit(1)
 
 sys.exit(0)
+
+# does task.log exists?

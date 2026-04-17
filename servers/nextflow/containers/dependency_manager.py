@@ -3,7 +3,8 @@ this python program
 monitors the subjects folder
 whenenver a raw_session.flag is created
 creates all alyx tasks for the session in the structure:
-task.task_name.task_id.status
+
+task.task_id.task_name.status
 
 these are the statuses:
 creates a file task.task_name.task_id.waiting_for_parents if the task has parents
@@ -14,28 +15,52 @@ loop over all tasks that have .waiting_for_parents status
 see if all their dependencies are matched
 if yes, change status to .ready
 
-nextflow looks for task.task_name.task_id.ready files
+nextflow looks for task.task_id.task_name.ready files
 runs the task
 writes to task.task_name.task_id.completed
+
+
+if all are with .completed or .errored, exit
 """
 
-import inotify.adapters
 import sys
+import inotify.adapters
+import shutil
 from pathlib import Path
 from one.api import ONE
 from ibllib.pipes.dynamic_pipeline import make_pipeline
 
 one = ONE(cache_rest=None)
 
-notifier = inotify.adapters.InotifyTree("/mnt/s0/georg/Data/Subjects/")
+session_path = sys.argv[1]
+notifier = inotify.adapters.InotifyTree(session_path)
 
-print("Watching... now touch a file")
+eid = one.path2eid(session_path)
+tasks = one.alyx.rest("tasks", "list", django=f"session__id,{eid}")
+for task_dict in tasks:
+    status = "ready" if len(task_dict["parent"]) == 0 else "waiting_for_parents"
+    task_flagfile = f"task.{task_dict['id']}.{task_dict['name']}.{status}"
+    Path(session_path) / task_flagfile.touch
+
+print(f"Watching: {session_path}")
+
+# needs to look for
+
 for event in notifier.event_gen(yield_nones=False):
     (_, type_names, path, filename) = event
-    if type_names == ["IN_CLOSE_WRITE"] and filename == "raw_session.flag":
-        # raw_session.flag was created:
-        pipeline = make_pipeline(path, one=one)
-        tasks_alyx = pipeline.create_alyx_tasks()
+    if filename.startswith("task."):  # TODO better to a proper glob
+        if type_names == ["IN_CLOSE_WRITE"]:
+            _, task_id, task_name, status = filename.split(".")
+            # check if this leads to any of the child tasks with .waiting_for_parents -> .ready
+            if status == ".waiting_for_parents":
+                # check if all
+                parent_statuses = []
+                for parent_id in tasks[task_id]["parents"]:
+                    for flagfile in session_path.glob("task.*"):
+                        if parent_id in flagfile:
+                            parent_statuses.append(flagfile.split(".")[-1])
+                if all(parent_statuses):
+                    shutil.move(filename, filename.with_suffix(".ready"))
 
-        # create task ids and write them to a file
-        task_ids = [task["id"] for task in tasks_alyx]
+            # check if all are either .completed or .errored
+            # -> exit
