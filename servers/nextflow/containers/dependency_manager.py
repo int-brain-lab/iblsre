@@ -28,7 +28,6 @@ import inotify.adapters
 import shutil
 from pathlib import Path
 from one.api import ONE
-from ibllib.pipes.dynamic_pipeline import make_pipeline
 
 one = ONE(cache_rest=None)
 
@@ -44,23 +43,55 @@ for task_dict in tasks:
 
 print(f"Watching: {session_path}")
 
-# needs to look for
 
+def get_flag_files(session_path):
+    # TODO make that glob pattern robust (UUID)
+    return list(session_path.glob("task.*.*.*"))
+
+
+def get_parent_statuses(task_id, session_path):
+    # get the parent statuses of a task id
+    # on from disk, and not via alyx
+    parent_ids = tasks[task_id]["parents"]
+    statuses = []
+    for flag_file in get_flag_files(session_path):
+        _, name, task_id, status = flag_file.split(".")
+        if task_id in parent_ids:
+            statuses.append(status)
+    # more compact, less readable
+
+    # return [f.split('.')[2] for f in filter(lambda f: f.split('.')[2] in parent_ids, get_flag_files(session_path))]
+    return statuses
+
+
+# the main loop
 for event in notifier.event_gen(yield_nones=False):
     (_, type_names, path, filename) = event
     if filename.startswith("task."):  # TODO better to a proper glob
-        if type_names == ["IN_CLOSE_WRITE"]:
+        if type_names == ["IN_CLOSE_WRITE"]:  # emitted when file is closed
             _, task_id, task_name, status = filename.split(".")
-            # check if this leads to any of the child tasks with .waiting_for_parents -> .ready
-            if status == ".waiting_for_parents":
-                # check if all
-                parent_statuses = []
-                for parent_id in tasks[task_id]["parents"]:
-                    for flagfile in session_path.glob("task.*"):
-                        if parent_id in flagfile:
-                            parent_statuses.append(flagfile.split(".")[-1])
-                if all(parent_statuses):
-                    shutil.move(filename, filename.with_suffix(".ready"))
+            if status == "completed":
+                # a task has finished. If so, check if this has any consequences for the
+                # ones that are waiting for parents
+                waiting_tasks = session_path.glob("task.*.*.waiting_for_parents")
+                for waiting_task in waiting_tasks:
+                    _, name, task_id, status = waiting_task.split(".")
+                    if all(
+                        [
+                            status == "completed"
+                            for status in get_parent_statuses(task_id, session_path)
+                        ]
+                    ):
+                        # set this task to ready
+                        shutil.move(filename, filename.with_suffix(".ready"))
 
-            # check if all are either .completed or .errored
-            # -> exit
+            if status == "completed" or status == "errored":
+                # a task completed or errored out
+                # check if all are completed or errored
+                # if so, quit
+                all_statuses = [
+                    flag_file.split(".")[2]
+                    for flag_file in get_flag_files(session_path)
+                ]
+                if all([status in ["completed", "errored"] for status in all_statuses]):
+                    sys.exit(0)

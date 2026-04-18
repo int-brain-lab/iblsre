@@ -80,13 +80,15 @@ workflow {
 
     folders.view {"processing session at: $it" }
 
-    // TODO here: integrate the dependency manager (on a session level)
 
     // For each session folder, create the alyx tasks, and the
     // task_ids.txt file
     // some clarification here:
     // the file is being copied out of the container into the nextflow working directory
     ids_file = CREATE_ALYX_TASKS(folders)
+
+    // TODO here: integrate the dependency manager (on a session level)
+    LAUNCH_DEPEDENCY_MANAGER(folders)
 
     // Split task_ids.txt into one channel item per ID
     task_ids = ids_file
@@ -102,6 +104,7 @@ workflow {
     RUN_ALYX_TASK(task_ids)
 
     // get the logs from the work folder
+    // TODO figure out when the alyx task log is written in the normal case
     UPDATE_ALYX_TASK_LOG()
 }
 
