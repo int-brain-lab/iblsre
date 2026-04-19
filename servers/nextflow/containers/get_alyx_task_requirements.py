@@ -24,7 +24,7 @@ match len(sys.argv):
 def get_image(task_name):
     # to be implemented:
     # load the mapping, get the correct image
-    return "ibllib:nextflow"
+    return "iblphotometry:nextflow"
 
 
 # get the task dict from alyx
@@ -44,10 +44,10 @@ if task_dict["gpu"] > 0:
 # PRIORITY
 resources["priority"] = task_dict["priority"]
 # MEMORY
-resources["memory"] = f"{task_dict['memory']} GB"
+resources["memory"] = f"{task_dict['ram']} GB"
 # IMAGE
 resources["container"] = get_image(task_dict["name"])
 
 # write json out
-with open(f"{task_id}.resources.json", "w") as fH:
+with open(f"{task_id}.requirements.json", "w") as fH:
     json.dump(resources, fH)
