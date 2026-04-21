@@ -18,30 +18,14 @@ process PARSE_EXPERIMENT_DESCRIPTION {
     """
 }
 
-process PHOTOMETRY_SYNC_DAQ {
+process PHOTOMETRY_SYNC {
     container 'iblphotometry:nextflow'
     input:
     tuple val(session_path), val(experiment_description)
-    // script: "echo would run a daq sync on $session_path"
     script:
     """
     python /home/ubuntu/photometry_sync.py $session_path
     """
-
-}
-
-process PHOTOMETRY_SYNC_BPOD {
-    container 'iblphotometry:nextflow'
-    input:
-    tuple val(session_path), val(experiment_description)
-    script: "echo would run a bpod sync on $session_path"
-}
-
-process PHOTOMETRY_SYNC_PASSIVE {
-    container 'iblphotometry:nextflow'
-    input:
-    tuple val(session_path), val(experiment_description)
-    script: "echo would run a passive sync on $session_path"
 }
 
 
@@ -51,10 +35,16 @@ workflow {
             .fromPath(params.file)
             .splitText() { it.trim() }
             .filter { it }
-            .view()
+            .map { session_path -> file(session_path).toString() }
+    } else if (params.watch_dir) {
+        session_ch = Channel
+            .watchPath("${params.watch_dir}/**/raw_session.flag", 'create')
+            .map { session_path -> file(session_path).parent.toString() }
+    } else {
+        error "Either --file or --watch_dir must be provided"
     }
 
-    experiment_ch = PARSE_EXPERIMENT_DESCRIPTION(session_ch)
+    photometry_session_ch = PARSE_EXPERIMENT_DESCRIPTION(session_ch)
         .experiment_description_json
         .map { session_path, json_str ->
             [
@@ -62,26 +52,7 @@ workflow {
                 experiment_description: new groovy.json.JsonSlurper().parseText(json_str.trim())
             ]
         }
-        .map { session ->
-            def tasks = session.experiment_description.tasks
-            def task_name = tasks[0] instanceof Map ? tasks[0].keySet()[0] : tasks[0].toString()
-            session + [protocol_count: tasks.size(), is_passive: task_name.toLowerCase().contains('passive')]
-        }
-        .branch {
-            chained: it.protocol_count > 1
-            passive: it.is_passive
-            regular: true
-        }
-        .set { session_types }
+        .filter { it.experiment_description.devices?.containsKey('neurophotometrics') }
 
-    session_types.regular
-        .map { it.subMap(['session_path', 'experiment_description']) } // strips the protocol_count is_passive flag
-        .branch {
-            daqami: it.experiment_description.devices.neurophotometrics.sync_mode == 'daqami'
-            bpod:   it.experiment_description.devices.neurophotometrics.sync_mode == 'bpod'
-        }
-        .set { mode_branches }
-
-    PHOTOMETRY_SYNC_DAQ(mode_branches.daqami)
-    PHOTOMETRY_SYNC_BPOD(mode_branches.bpod)
+    PHOTOMETRY_SYNC(photometry_session_ch)
 }

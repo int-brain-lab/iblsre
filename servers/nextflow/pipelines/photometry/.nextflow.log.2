@@ -1,91 +1,86 @@
-Apr-21 14:02:58.080 [main] DEBUG nextflow.cli.Launcher - $> nextflow photometry_pipeline.nf --file test_sessions
-Apr-21 14:02:58.126 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.10.4
-Apr-21 14:02:58.137 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/ibladmin/.nextflow/plugins; core-plugins: nf-amazon@3.4.4,nf-azure@1.20.2,nf-cloudcache@0.5.0,nf-codecommit@0.5.0,nf-console@1.3.0,nf-google@1.23.5,nf-k8s@1.2.2,nf-tower@1.17.5,nf-wave@1.16.1
-Apr-21 14:02:58.149 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
-Apr-21 14:02:58.149 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
-Apr-21 14:02:58.151 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
-Apr-21 14:02:58.158 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
-Apr-21 14:02:58.228 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
-Apr-21 14:02:58.242 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/nextflow.config
-Apr-21 14:02:58.243 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/nextflow.config
-Apr-21 14:02:58.256 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
-Apr-21 14:02:58.479 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins declared=[nf-schema@2.1.0]
-Apr-21 14:02:58.480 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
-Apr-21 14:02:58.480 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[nf-schema@2.1.0]
-Apr-21 14:02:58.765 [main] DEBUG n.plugin.HttpPluginRepository - Registry request: https://registry.nextflow.io/api/v1/plugins/dependencies?plugins=nf-schema%402.1.0&nextflowVersion=25.10.4
+Apr-21 15:40:16.985 [main] DEBUG nextflow.cli.Launcher - $> nextflow photometry_pipeline.nf --file test_sessions
+Apr-21 15:40:17.035 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.10.4
+Apr-21 15:40:17.046 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/ibladmin/.nextflow/plugins; core-plugins: nf-amazon@3.4.4,nf-azure@1.20.2,nf-cloudcache@0.5.0,nf-codecommit@0.5.0,nf-console@1.3.0,nf-google@1.23.5,nf-k8s@1.2.2,nf-tower@1.17.5,nf-wave@1.16.1
+Apr-21 15:40:17.058 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Apr-21 15:40:17.059 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Apr-21 15:40:17.060 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+Apr-21 15:40:17.067 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
+Apr-21 15:40:17.137 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Apr-21 15:40:17.151 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/nextflow.config
+Apr-21 15:40:17.153 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/nextflow.config
+Apr-21 15:40:17.164 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+Apr-21 15:40:17.390 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins declared=[nf-schema@2.1.0]
+Apr-21 15:40:17.390 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+Apr-21 15:40:17.390 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[nf-schema@2.1.0]
+Apr-21 15:40:17.724 [main] DEBUG n.plugin.HttpPluginRepository - Registry request: https://registry.nextflow.io/api/v1/plugins/dependencies?plugins=nf-schema%402.1.0&nextflowVersion=25.10.4
 - code: 200
 - body: {"plugins":[{"id":"nf-schema","releases":[{"version":"2.1.0","url":"https://registry.nextflow.io/api/v1/plugins/nf-schema/2.1.0/download/nf-schema-2.1.0.zip","date":"2024-08-20T12:36:43.703588Z","sha512sum":"ff6b3cd7a169a0136aa2a3e70884ef0866a9741793c3383813d659aabde160cdb5b47175e119179105b78060d7d8e1d583951b69bdeb515ef2660fee8fabfb69","requires":">=23.10.0","dependsOn":[],"status":"PUBLISHED"}],"projectUrl":"https://github.com/nextflow-io/nf-schema","provider":"nextflow-io"}]}
-Apr-21 14:02:58.787 [main] DEBUG nextflow.plugin.PluginUpdater - Installing plugin nf-schema version: 2.1.0
-Apr-21 14:02:58.791 [main] INFO  org.pf4j.AbstractPluginManager - Plugin 'nf-schema@2.1.0' resolved
-Apr-21 14:02:58.791 [main] INFO  org.pf4j.AbstractPluginManager - Start plugin 'nf-schema@2.1.0'
-Apr-21 14:02:58.794 [main] DEBUG nextflow.plugin.BasePlugin - Plugin started nf-schema@2.1.0
-Apr-21 14:02:58.803 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /home/ibladmin/.nextflow/secrets/store.json
-Apr-21 14:02:58.804 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@7efa3f63] - activable => nextflow.secret.LocalSecretsProvider@7efa3f63
-Apr-21 14:02:58.805 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 by global default
-Apr-21 14:02:58.813 [main] DEBUG nextflow.cli.CmdRun - Launching `photometry_pipeline.nf` [small_almeida] DSL2 - revision: cb6ac15e6f
-Apr-21 14:02:58.839 [main] DEBUG nextflow.Session - Session UUID: 45712225-25c4-4928-b47e-ffeff1dba91d
-Apr-21 14:02:58.840 [main] DEBUG nextflow.Session - Run name: small_almeida
-Apr-21 14:02:58.840 [main] DEBUG nextflow.Session - Executor pool size: 32
-Apr-21 14:02:58.844 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
-Apr-21 14:02:58.847 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=96; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
-Apr-21 14:02:58.856 [main] DEBUG nextflow.cli.CmdRun - 
+Apr-21 15:40:17.746 [main] DEBUG nextflow.plugin.PluginUpdater - Installing plugin nf-schema version: 2.1.0
+Apr-21 15:40:17.750 [main] INFO  org.pf4j.AbstractPluginManager - Plugin 'nf-schema@2.1.0' resolved
+Apr-21 15:40:17.750 [main] INFO  org.pf4j.AbstractPluginManager - Start plugin 'nf-schema@2.1.0'
+Apr-21 15:40:17.753 [main] DEBUG nextflow.plugin.BasePlugin - Plugin started nf-schema@2.1.0
+Apr-21 15:40:17.762 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /home/ibladmin/.nextflow/secrets/store.json
+Apr-21 15:40:17.763 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@3b55dd15] - activable => nextflow.secret.LocalSecretsProvider@3b55dd15
+Apr-21 15:40:17.764 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 by global default
+Apr-21 15:40:17.772 [main] DEBUG nextflow.cli.CmdRun - Launching `photometry_pipeline.nf` [boring_jang] DSL2 - revision: 1b5a6a319e
+Apr-21 15:40:17.799 [main] DEBUG nextflow.Session - Session UUID: 05f5031a-56a2-40ba-aa50-40b9a87caa12
+Apr-21 15:40:17.799 [main] DEBUG nextflow.Session - Run name: boring_jang
+Apr-21 15:40:17.799 [main] DEBUG nextflow.Session - Executor pool size: 32
+Apr-21 15:40:17.804 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+Apr-21 15:40:17.807 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=96; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Apr-21 15:40:17.816 [main] DEBUG nextflow.cli.CmdRun - 
   Version: 25.10.4 build 11173
   Created: 10-02-2026 15:17 UTC (15:17 WEST)
   System: Linux 6.8.0-40-generic
   Runtime: Groovy 4.0.28 on OpenJDK 64-Bit Server VM 17.0.10+7
   Encoding: UTF-8 (UTF-8)
-  Process: 1247784@parede [127.0.1.1]
-  CPUs: 32 - Mem: 62.7 GB (10.1 GB) - Swap: 2 GB (670 MB)
-Apr-21 14:02:58.867 [main] DEBUG nextflow.Session - Work-dir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work [ext2/ext3]
-Apr-21 14:02:58.867 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/bin
-Apr-21 14:02:58.872 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
-Apr-21 14:02:58.878 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
-Apr-21 14:02:58.879 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
-Apr-21 14:02:58.901 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
-Apr-21 14:02:58.906 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 33; maxThreads: 1000
-Apr-21 14:02:58.942 [main] DEBUG nextflow.Session - Session start
-Apr-21 14:02:59.186 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
-Apr-21 14:02:59.276 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-Apr-21 14:02:59.276 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-Apr-21 14:02:59.289 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
-Apr-21 14:02:59.292 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=32; memory=62.7 GB; capacity=32; pollInterval=100ms; dumpInterval=5m
-Apr-21 14:02:59.293 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
-Apr-21 14:02:59.306 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'PARSE_EXPERIMENT_DESCRIPTION': maxForks=0; fair=false; array=0
-Apr-21 14:02:59.332 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-Apr-21 14:02:59.332 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-Apr-21 14:02:59.333 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'PHOTOMETRY_SYNC_DAQ': maxForks=0; fair=false; array=0
-Apr-21 14:02:59.335 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-Apr-21 14:02:59.335 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-Apr-21 14:02:59.336 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'PHOTOMETRY_SYNC_BPOD': maxForks=0; fair=false; array=0
-Apr-21 14:02:59.337 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: PHOTOMETRY_SYNC_PASSIVE, PARSE_EXPERIMENT_DESCRIPTION, PHOTOMETRY_SYNC_BPOD, PHOTOMETRY_SYNC_DAQ
-Apr-21 14:02:59.338 [main] DEBUG nextflow.Session - Igniting dataflow network (4)
-Apr-21 14:02:59.341 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > PARSE_EXPERIMENT_DESCRIPTION
-Apr-21 14:02:59.341 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > PHOTOMETRY_SYNC_DAQ
-Apr-21 14:02:59.341 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > PHOTOMETRY_SYNC_BPOD
-Apr-21 14:02:59.341 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
-  Script_dd710b810d68f2a6: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/photometry_pipeline.nf
-Apr-21 14:02:59.341 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
-Apr-21 14:02:59.341 [main] DEBUG nextflow.Session - Session await
-Apr-21 14:02:59.420 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Apr-21 14:02:59.422 [Task submitter] INFO  nextflow.Session - [09/c0a5b8] Submitted process > PARSE_EXPERIMENT_DESCRIPTION (2)
-Apr-21 14:02:59.428 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Apr-21 14:02:59.429 [Task submitter] INFO  nextflow.Session - [5e/c95bfe] Submitted process > PARSE_EXPERIMENT_DESCRIPTION (1)
-Apr-21 14:02:59.464 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 2; name: PARSE_EXPERIMENT_DESCRIPTION (2); status: COMPLETED; exit: 0; error: -; workDir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/09/c0a5b8baee77e75a474842a62e4023]
-Apr-21 14:02:59.465 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'TaskFinalizer' minSize=10; maxSize=96; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
-Apr-21 14:02:59.467 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: PARSE_EXPERIMENT_DESCRIPTION (1); status: COMPLETED; exit: 0; error: -; workDir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/5e/c95bfe64a6fbed228b2a7af0a9a7af]
-Apr-21 14:02:59.490 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Apr-21 14:02:59.490 [Task submitter] INFO  nextflow.Session - [c4/159816] Submitted process > PHOTOMETRY_SYNC_DAQ (2)
-Apr-21 14:02:59.493 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Apr-21 14:02:59.493 [Task submitter] INFO  nextflow.Session - [97/b488c6] Submitted process > PHOTOMETRY_SYNC_DAQ (1)
-Apr-21 14:02:59.528 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 4; name: PHOTOMETRY_SYNC_DAQ (2); status: COMPLETED; exit: 2; error: -; workDir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/c4/15981622e8cfb7d53d976db7333762]
-Apr-21 14:02:59.529 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 3; name: PHOTOMETRY_SYNC_DAQ (1); status: COMPLETED; exit: 2; error: -; workDir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/97/b488c65bb0cfa2966de97b378ca2c4]
-Apr-21 14:02:59.531 [TaskFinalizer-3] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
-  task: name=PHOTOMETRY_SYNC_DAQ (2); work-dir=/home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/c4/15981622e8cfb7d53d976db7333762
-  error [nextflow.exception.ProcessFailedException]: Process `PHOTOMETRY_SYNC_DAQ (2)` terminated with an error exit status (2)
-Apr-21 14:02:59.540 [TaskFinalizer-3] ERROR nextflow.processor.TaskProcessor - Error executing process > 'PHOTOMETRY_SYNC_DAQ (2)'
+  Process: 1263979@parede [127.0.1.1]
+  CPUs: 32 - Mem: 62.7 GB (614.7 MB) - Swap: 2 GB (670.3 MB)
+Apr-21 15:40:17.827 [main] DEBUG nextflow.Session - Work-dir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work [ext2/ext3]
+Apr-21 15:40:17.827 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/bin
+Apr-21 15:40:17.832 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Apr-21 15:40:17.838 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+Apr-21 15:40:17.840 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
+Apr-21 15:40:17.861 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Apr-21 15:40:17.865 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 33; maxThreads: 1000
+Apr-21 15:40:17.899 [main] DEBUG nextflow.Session - Session start
+Apr-21 15:40:18.089 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Apr-21 15:40:18.176 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Apr-21 15:40:18.176 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Apr-21 15:40:18.181 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+Apr-21 15:40:18.184 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=32; memory=62.7 GB; capacity=32; pollInterval=100ms; dumpInterval=5m
+Apr-21 15:40:18.186 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+Apr-21 15:40:18.197 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'PARSE_EXPERIMENT_DESCRIPTION': maxForks=0; fair=false; array=0
+Apr-21 15:40:18.216 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Apr-21 15:40:18.216 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Apr-21 15:40:18.216 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'PHOTOMETRY_SYNC': maxForks=0; fair=false; array=0
+Apr-21 15:40:18.218 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: PARSE_EXPERIMENT_DESCRIPTION, PHOTOMETRY_SYNC
+Apr-21 15:40:18.219 [main] DEBUG nextflow.Session - Igniting dataflow network (3)
+Apr-21 15:40:18.222 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > PARSE_EXPERIMENT_DESCRIPTION
+Apr-21 15:40:18.222 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > PHOTOMETRY_SYNC
+Apr-21 15:40:18.223 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Script_03f6acc411968fe6: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/photometry_pipeline.nf
+Apr-21 15:40:18.223 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+Apr-21 15:40:18.223 [main] DEBUG nextflow.Session - Session await
+Apr-21 15:40:18.313 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Apr-21 15:40:18.314 [Task submitter] INFO  nextflow.Session - [85/6d1806] Submitted process > PARSE_EXPERIMENT_DESCRIPTION (1)
+Apr-21 15:40:18.320 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Apr-21 15:40:18.320 [Task submitter] INFO  nextflow.Session - [89/53bb3d] Submitted process > PARSE_EXPERIMENT_DESCRIPTION (2)
+Apr-21 15:40:18.743 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: PARSE_EXPERIMENT_DESCRIPTION (1); status: COMPLETED; exit: 0; error: -; workDir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/85/6d18069f55ebbdc6b7b3f8ff2cdf61]
+Apr-21 15:40:18.744 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'TaskFinalizer' minSize=10; maxSize=96; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Apr-21 15:40:18.766 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Apr-21 15:40:18.767 [Task submitter] INFO  nextflow.Session - [5e/0920da] Submitted process > PHOTOMETRY_SYNC (1)
+Apr-21 15:40:18.770 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 2; name: PARSE_EXPERIMENT_DESCRIPTION (2); status: COMPLETED; exit: 0; error: -; workDir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/89/53bb3d97180d9e4492b18f8df0c92e]
+Apr-21 15:40:18.778 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Apr-21 15:40:18.779 [Task submitter] INFO  nextflow.Session - [e7/868978] Submitted process > PHOTOMETRY_SYNC (2)
+Apr-21 15:40:29.966 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 3; name: PHOTOMETRY_SYNC (1); status: COMPLETED; exit: 1; error: -; workDir: /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/5e/0920da222ed1835664c3a37675829d]
+Apr-21 15:40:29.970 [TaskFinalizer-3] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
+  task: name=PHOTOMETRY_SYNC (1); work-dir=/home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/5e/0920da222ed1835664c3a37675829d
+  error [nextflow.exception.ProcessFailedException]: Process `PHOTOMETRY_SYNC (1)` terminated with an error exit status (1)
+Apr-21 15:40:29.980 [TaskFinalizer-3] ERROR nextflow.processor.TaskProcessor - Error executing process > 'PHOTOMETRY_SYNC (1)'
 
 Caused by:
-  Process `PHOTOMETRY_SYNC_DAQ (2)` terminated with an error exit status (2)
+  Process `PHOTOMETRY_SYNC (1)` terminated with an error exit status (1)
 
 
 Command executed:
@@ -93,60 +88,39 @@ Command executed:
   python /home/ubuntu/photometry_sync.py /mnt/s0/georg/Data/Subjects/ZFM-09140/2025-08-28/001
 
 Command exit status:
-  2
+  1
 
 Command output:
-  (empty)
+  [1;33m2026-04-21 14:40:22 WARNING  widefield.py:19   wfield not installed[0m
+  [1;33m2026-04-21 14:40:22 WARNING  widefield.py:24   labcams not installed[0m
+  [1;33m2026-04-21 14:40:23 WARNING  widefield_tasks.py:26   labcams not installed[0m
+  [1;33m2026-04-21 14:40:29 WARNING  camera.py:68   labcams not installed[0m
+  FibrePhotometryBaseSync.__init__() missing 2 required positional arguments: 'session_path' and 'one'
 
 Command error:
-  python: can't open file '/home/ubuntu/photometry_sync.py': [Errno 2] No such file or directory
+  [1;33m2026-04-21 14:40:22 WARNING  widefield.py:19   wfield not installed[0m
+  [1;33m2026-04-21 14:40:22 WARNING  widefield.py:24   labcams not installed[0m
+  [1;33m2026-04-21 14:40:23 WARNING  widefield_tasks.py:26   labcams not installed[0m
+  /home/ubuntu/.venv/lib/python3.12/site-packages/ibllib/plots/misc.py:6: DeprecationWarning: This module is deprecated and will be removed in future versions
+    warnings.warn('This module is deprecated and will be removed in future versions', DeprecationWarning)
+  [1;33m2026-04-21 14:40:29 WARNING  camera.py:68   labcams not installed[0m
+  FibrePhotometryBaseSync.__init__() missing 2 required positional arguments: 'session_path' and 'one'
 
 Work dir:
-  /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/c4/15981622e8cfb7d53d976db7333762
+  /home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/5e/0920da222ed1835664c3a37675829d
+
+Container:
+  iblphotometry:nextflow
 
 Tip: you can try to figure out what's wrong by changing to the process work dir and showing the script file named `.command.sh`
-Apr-21 14:02:59.541 [TaskFinalizer-4] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
-  task: name=PHOTOMETRY_SYNC_DAQ (1); work-dir=/home/ibladmin/Documents/georg/code/iblsre/servers/nextflow/pipelines/photometry/work/97/b488c65bb0cfa2966de97b378ca2c4
-  error [nextflow.exception.ProcessFailedException]: Process `PHOTOMETRY_SYNC_DAQ (1)` terminated with an error exit status (2)
-Apr-21 14:02:59.542 [main] DEBUG nextflow.Session - Session await > all processes finished
-Apr-21 14:02:59.542 [TaskFinalizer-3] DEBUG nextflow.Session - Session aborted -- Cause: Process `PHOTOMETRY_SYNC_DAQ (2)` terminated with an error exit status (2)
-Apr-21 14:02:59.552 [TaskFinalizer-3] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=2; failedCount=2; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=3ms; failedDuration=15ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=2; peakCpus=2; peakMemory=0; ]
-Apr-21 14:02:59.615 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
-Apr-21 14:02:59.615 [main] DEBUG nextflow.Session - Session await > all barriers passed
-Apr-21 14:02:59.616 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=2; failedCount=2; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=3ms; failedDuration=15ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=2; peakCpus=2; peakMemory=0; ]
-Apr-21 14:02:59.616 [TaskFinalizer-3] DEBUG nextflow.Session - null
-java.lang.InterruptedException: null
-	at java.base/java.lang.Object.wait(Native Method)
-	at java.base/java.lang.Thread.join(Thread.java:1313)
-	at java.base/java.lang.Thread.join(Thread.java:1381)
-	at nextflow.trace.AnsiLogObserver.onFlowComplete(AnsiLogObserver.groovy:520)
-	at nextflow.Session$_notifyFlowComplete_lambda39.doCall(Session.groovy:1121)
-	at nextflow.Session.notifyEvent(Session.groovy:1151)
-	at nextflow.Session.notifyFlowComplete(Session.groovy:1121)
-	at nextflow.Session.shutdown0(Session.groovy:779)
-	at nextflow.Session.abort(Session.groovy:834)
-	at nextflow.Session.fault(Session.groovy:796)
-	at nextflow.processor.TaskPollingMonitor.finalizeTask(TaskPollingMonitor.groovy:753)
-	at nextflow.processor.TaskPollingMonitor.safeFinalizeTask(TaskPollingMonitor.groovy:736)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
-	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
-	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
-	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
-	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1339)
-	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
-	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
-	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:645)
-	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
-	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethodSafe(InvokerHelper.java:82)
-	at nextflow.processor.TaskPollingMonitor$_checkTaskStatus_lambda8.doCall(TaskPollingMonitor.groovy:726)
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
-	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
-	at java.base/java.lang.Thread.run(Thread.java:840)
-Apr-21 14:02:59.749 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
-Apr-21 14:02:59.757 [main] INFO  org.pf4j.AbstractPluginManager - Stop plugin 'nf-schema@2.1.0'
-Apr-21 14:02:59.757 [main] DEBUG nextflow.plugin.BasePlugin - Plugin stopped nf-schema
-Apr-21 14:02:59.758 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
+Apr-21 15:40:29.983 [TaskFinalizer-3] DEBUG nextflow.Session - Session aborted -- Cause: Process `PHOTOMETRY_SYNC (1)` terminated with an error exit status (1)
+Apr-21 15:40:29.992 [TaskFinalizer-3] WARN  n.processor.TaskPollingMonitor - Killing running tasks (1)
+Apr-21 15:40:29.998 [TaskFinalizer-3] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=2; failedCount=1; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=1; succeedDuration=730ms; failedDuration=11.2s; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=2; peakCpus=2; peakMemory=0; ]
+Apr-21 15:40:30.013 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
+Apr-21 15:40:30.190 [main] DEBUG nextflow.Session - Session await > all processes finished
+Apr-21 15:40:30.190 [main] DEBUG nextflow.Session - Session await > all barriers passed
+Apr-21 15:40:30.191 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=2; failedCount=1; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=1; succeedDuration=730ms; failedDuration=11.2s; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=2; peakCpus=2; peakMemory=0; ]
+Apr-21 15:40:30.193 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+Apr-21 15:40:30.199 [main] INFO  org.pf4j.AbstractPluginManager - Stop plugin 'nf-schema@2.1.0'
+Apr-21 15:40:30.199 [main] DEBUG nextflow.plugin.BasePlugin - Plugin stopped nf-schema
+Apr-21 15:40:30.200 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
