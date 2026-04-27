@@ -76,6 +76,7 @@ process RUN_ALYX_TASK {
     cpus   { resources.cpus }
     time   { resources.time as nextflow.util.Duration }
     container { resources.container }
+
     containerOptions "--cpus ${task.cpus}"
     // TODO
     // this was suggested but doesn't work

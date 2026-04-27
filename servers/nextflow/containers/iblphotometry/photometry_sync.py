@@ -10,11 +10,9 @@ DRY = False
 REGISTER_DATASETS = False
 
 # TODO implement proper logging
-# session_path = Path(sys.argv[1])
-session_path = Path("/mnt/s0/georg/Data/Subjects/ZFM-09140/2025-08-28/001")
+session_path = Path(sys.argv[1])
 
 # if successful, register datasets
-
 try:
     one = ONE(cache_rest=None)
     experiment_description = sess_params.read_params(session_path)
@@ -24,6 +22,7 @@ try:
     )
     pipeline = Pipeline(session_path=session_path, one=one)
     pipeline.tasks = tasks
+    pipeline.create_alyx_tasks(rerun__status__in="__all__")
     for task_dict in pipeline.create_alyx_tasks():
         run_alyx_task(
             one=one,
