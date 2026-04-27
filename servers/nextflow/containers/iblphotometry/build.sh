@@ -3,4 +3,6 @@
 
 # build notes: the devcontainer.json contains some specific strings
 # the dockerfile requires the commit hash of the local vscode installation
-docker build -t iblphotometry:nextflow -f iblphotometry.dockerfile .
+docker build -t internationalbrainlab/iblphotometry:nextflow -f iblphotometry.dockerfile .
+
+docker push internationalbrainlab/iblphotometry:nextflow

@@ -1,4 +1,4 @@
-FROM ibllib:nextflow
+FROM internationalbrainlab/ibllib:nextflow
 
 # extra install
 # RUN uv pip install --python $VIRTUAL_ENV ibl-photometry

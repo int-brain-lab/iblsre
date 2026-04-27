@@ -30,7 +30,7 @@ RUN uv pip install --python $VIRTUAL_ENV "git+https://github.com/int-brain-lab/i
 # the vscode debug functionality needs compatible versions between your local vscode install
 # and the vscode-server installed in the docker image
 # set the VSCode commit hash here (get it from Help → About in VSCode)
-ARG VSCODE_COMMIT=41dd792b5e652393e7787322889ed5fdc58bd75b
+ARG VSCODE_COMMIT=10c8e557c8b9f9ed0a87f61f1c9a44bde731c409
 
 # Install VSCode server and extensions
 RUN curl -fsSL "https://update.code.visualstudio.com/commit:${VSCODE_COMMIT}/server-linux-x64/stable" \
