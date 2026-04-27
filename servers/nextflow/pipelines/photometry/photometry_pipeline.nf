@@ -1,5 +1,5 @@
 process PARSE_EXPERIMENT_DESCRIPTION {
-    container 'ibllib:nextflow'
+    container 'internationalbrainlab/ibllib:nextflow'
     input:
     val(session_path)
 
@@ -12,14 +12,14 @@ process PARSE_EXPERIMENT_DESCRIPTION {
     python3 -c "
     import yaml, json
     with open('${session_path}/_ibl_experiment.description.yaml') as f:
-        cfg = yaml.safe_load(f)
-    print(json.dumps(cfg))
+        experiment_description = yaml.safe_load(f)
+    print(json.dumps(experiment_description))
     "
     """
 }
 
 process PHOTOMETRY_SYNC {
-    container 'iblphotometry:nextflow'
+    container 'internationalbrainlab/iblphotometry:nextflow'
     input:
     tuple val(session_path), val(experiment_description)
     script:

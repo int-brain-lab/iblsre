@@ -5,7 +5,7 @@ process CREATE_ALYX_TASKS {
     priority = 0
     cpus 1
     memory '4 GB'
-    container 'iblphotometry:nextflow'
+    container 'internationalbrainlab/iblphotometry:nextflow'
     // keeping stopped containers, verify if this works
     // afterScript 'if [ $? -eq 0 ]; then docker rm $NXF_BOXID; fi'
 
@@ -25,7 +25,7 @@ process LAUNCH_DEPEDENCY_MANAGER {
     priority = 0
     cpus 4
     memory '4 GB'
-    container 'iblphotometry:nextflow'
+    container 'internationalbrainlab/iblphotometry:nextflow'
     input:
     tuple val(session_path), path(task_ids_file)
 
@@ -42,7 +42,7 @@ process GET_ALYX_TASK_REQUIREMENTS {
     priority = 0
     cpus 1
     memory '4 GB'
-    container 'iblphotometry:nextflow'
+    container 'internationalbrainlab/iblphotometry:nextflow'
     input:
     tuple val(session_path), val(task_id)
 
@@ -56,7 +56,7 @@ process GET_ALYX_TASK_REQUIREMENTS {
 }
 
 process WAIT_FOR_FLAG {
-    container 'iblphotometry:nextflow'
+    container 'internationalbrainlab/iblphotometry:nextflow'
     input:
     tuple val(session_path), val(task_id), val(resources)
 
