@@ -1,11 +1,13 @@
 process PARSE_EXPERIMENT_DESCRIPTION {
+    errorStrategy 'ignore'
     container 'internationalbrainlab/ibllib:nextflow'
+    tag "${session_path}"
+
     input:
     val(session_path)
 
     output:
-    tuple val(session_path), stdout,
-     emit: experiment_description_json
+    tuple val(session_path), stdout, emit: experiment_description_json
 
     script:
     """
@@ -19,7 +21,10 @@ process PARSE_EXPERIMENT_DESCRIPTION {
 }
 
 process PHOTOMETRY_SYNC {
+    errorStrategy 'ignore'
     container 'internationalbrainlab/iblphotometry:nextflow'
+    tag "${session_path}"
+
     input:
     tuple val(session_path), val(experiment_description)
     script:

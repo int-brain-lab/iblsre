@@ -25,6 +25,8 @@ RUN uv venv $VIRTUAL_ENV && \
     uv pip install --python $VIRTUAL_ENV ipython debugpy
 
 # install via git, with specified branch
+# RUN git clone "git+https://github.com/int-brain-lab/ibllib.git@nextflow"
+# RUN UV pip install -e ./ibllib
 RUN uv pip install --python $VIRTUAL_ENV "git+https://github.com/int-brain-lab/ibllib.git@nextflow"
 
 # the vscode debug functionality needs compatible versions between your local vscode install
