@@ -1,3 +1,6 @@
+params.file      = null
+params.watch_dir = null
+
 process PARSE_EXPERIMENT_DESCRIPTION {
     errorStrategy 'ignore'
     container 'internationalbrainlab/ibllib:nextflow'
