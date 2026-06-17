@@ -1,0 +1,132 @@
+# Run on the EC2 instance after a fresh launch:
+#   sudo apt-get update && sudo apt-get install -y ansible git
+#   git clone https://github.com/int-brain-lab/iblsre /tmp/iblsre-setup
+#   ansible-playbook /tmp/iblsre-setup/brain-wide-bench/ansible/setup_brainwidebench_server.yaml
+#
+# Then copy your .env to /srv/app/.env and run:
+#   cd /srv/app && docker compose up -d --build
+#   docker compose exec -T web uv run alembic upgrade head
+---
+- name: Install Docker
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Gather Ubuntu codename
+      shell: grep 'UBUNTU_CODENAME' /etc/os-release | cut -d '=' -f 2
+      register: ubuntu_codename
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ubuntu_codename.stdout }} stable
+
+    - name: Install docker-ce
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create Docker group
+      group:
+        name: docker
+        state: present
+
+    - name: Add ubuntu user to Docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Restart Docker service
+      systemd:
+        name: docker
+        state: restarted
+
+- name: Prepare brain-wide-bench server
+  hosts: localhost
+  become: yes
+  vars:
+    app_dir: /srv/app-brain-wide-bench
+    repo_url: https://github.com/int-brain-lab/app-brain-wide-bench.git
+
+  tasks:
+    - name: Ensure git is installed
+      apt:
+        name: git
+        state: present
+
+    - name: Create app directory
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Clone app repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: main
+        update: yes
+      become_user: ubuntu
+
+    - name: Create spacer file (1 GB reserve to prevent disk-full emergencies)
+      command: dd if=/dev/zero of=/home/ubuntu/spacer.bin bs=1 count=0 seek=1G
+      args:
+        creates: /home/ubuntu/spacer.bin
+
+    - name: Create /srv/app symlink for convenience
+      file:
+        src: /srv/app-brain-wide-bench
+        dest: /srv/app
+        state: link
+
+    - name: Copy ibl-benchmark reminder
+      debug:
+        msg: >
+          ibl-benchmark is a private repo — rsync it manually:
+          rsync -az --exclude='.git' --exclude='__pycache__' --exclude='*.egg-info' --exclude='.venv'
+          <local>/ibl-benchmark/ -e "ssh -i ~/.ssh/brainwidebench-key.pem"
+          ubuntu@<ip>:/srv/ibl-benchmark/
+
+    - name: Add aliases to .bashrc
+      blockinfile:
+        path: /home/ubuntu/.bashrc
+        block: |
+          # IBL aliases
+          alias bwb='docker compose -f /srv/app-brain-wide-bench/docker-compose.yml'
+          alias bwb-logs='docker compose -f /srv/app-brain-wide-bench/docker-compose.yml logs -f'
+          alias bwb-shell='docker compose -f /srv/app-brain-wide-bench/docker-compose.yml exec web /bin/bash'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - IBL ALIAS"
+
+    - name: Remind operator to create .env
+      debug:
+        msg: >
+          Bootstrap complete. Next steps:
+          1. scp -i ~/.ssh/brainwidebench-key.pem .env ubuntu@<ip>:/srv/app/.env
+          2. ssh in, then: cd /srv/app && docker compose up -d --build
+          3. docker compose exec -T web uv run alembic upgrade head
+          4. curl http://localhost/health
