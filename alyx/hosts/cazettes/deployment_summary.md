@@ -20,7 +20,7 @@
 |---|---|
 | **EC2 instance** | `i-0a9ae0bd57840b9e5` (t3.small, Ubuntu 24.04, eu-west-2) |
 | **Elastic IP** | `16.60.20.132` |
-| **Security group** | `sg-0f5d7e8c3b2d6bcd0` (`alyx-cazettes-sg`) |
+| **Security group** | `sg-0f5d7e8c3b2d6bcd0` (`alyx-cazettes-sg`) — SSH port 22 open to `sg-0aadda61e701d7681` (SSH developers) |
 | **S3 bucket** | `cazettes-alyx-uploaded` (eu-west-2) |
 | **IAM user** | `cazettes-alyx-s3` |
 | **RDS** | `openlayx.clfrcwlvymbw.eu-west-2.rds.amazonaws.com` (shared, no new instance) |
