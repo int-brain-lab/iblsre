@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:17
     container_name: alyx_postgres
+    restart: unless-stopped
     env_file: .env
     volumes:
       - alyx_postgres:/var/lib/postgresql/data
