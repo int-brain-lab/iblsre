@@ -2,6 +2,8 @@ services:
   alyx_apache:
     image: internationalbrainlab/alyx_apache:latest
     container_name: alyx_apache
+    mem_limit: ${APACHE_MEM_LIMIT:-1500m}
+    memswap_limit: ${APACHE_MEM_LIMIT:-1500m}
     ports:
       - "8080:8080"
       - "443:443"
