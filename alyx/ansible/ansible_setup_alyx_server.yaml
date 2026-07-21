@@ -45,6 +45,39 @@
       args:
         creates: /home/ubuntu/spacer.bin
 
+    - name: Create 2GB swapfile
+      command: fallocate -l 2G /swapfile
+      args:
+        creates: /swapfile
+
+    - name: Set swapfile permissions
+      file:
+        path: /swapfile
+        mode: '0600'
+
+    - name: Format swapfile
+      command: mkswap /swapfile
+      when: ansible_swaptotal_mb == 0
+
+    - name: Enable swapfile
+      command: swapon /swapfile
+      when: ansible_swaptotal_mb == 0
+
+    - name: Persist swapfile in fstab
+      mount:
+        path: none
+        src: /swapfile
+        fstype: swap
+        opts: sw
+        state: present
+
+    - name: Set vm.swappiness for emergency-only swap use
+      sysctl:
+        name: vm.swappiness
+        value: '10'
+        state: present
+        reload: yes
+
     - name: Ensure log directory exists
       file:
         path: "{{ log_dir }}"
