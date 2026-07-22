@@ -74,3 +74,8 @@ RUN mkdir /var/www/alyx/alyx/uploaded
 
 RUN a2enmod rewrite
 RUN a2enmod wsgi
+# Enable ssl at build time so apache binds :443 on the first foreground start. The runtime
+# alyx_issue_ssl.sh also enables it, but it races the backgrounded apache start in the compose
+# command; relying on the upstream base image's default was fragile (a fresh ubuntu/apache2 no
+# longer enables ssl by default, which left :443 unbound on a fresh `docker compose up`).
+RUN a2enmod ssl
