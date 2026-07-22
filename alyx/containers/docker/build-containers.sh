@@ -33,11 +33,21 @@ if [ "$BUILD_BASE" = true ]; then
     --no-cache
 fi
 
+# The head container is built FROM internationalbrainlab/alyx_apache_base:latest.
+# When the base was just rebuilt locally (--base), do NOT --pull here: pulling would
+# overwrite the fresh local base with the older published image and silently drop
+# base-layer changes (e.g. apache/WSGI config). Without --base, --pull fetches the
+# latest published base to build the new top layer on.
+HEAD_PULL="--pull"
+if [ "$BUILD_BASE" = true ]; then
+  HEAD_PULL=""
+fi
+
 echo "Building head container..."
 # builds the top layer
 docker buildx build . \
   --platform linux/amd64 \
   --tag internationalbrainlab/alyx_apache:latest \
   -f ./Dockerfile \
-  --pull \
+  ${HEAD_PULL} \
   --no-cache
