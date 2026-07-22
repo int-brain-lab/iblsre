@@ -10,7 +10,8 @@ services:
       - "80:80"
     env_file: .env
     command: >
-      bash -c "python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
+      bash -c "pip install --no-cache-dir -r /home/iblalyx/requirements.txt &&
+               python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
                /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
                chown www-data:www-data -fR 664 /var/log/apache2 &
                /usr/sbin/apache2ctl -DFOREGROUND"
@@ -23,6 +24,9 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt
       - ${APACHE_LOG_DIR}:/var/log/apache2
       - ${DJANGO_MEDIA_ROOT:-~/uploaded}:/var/www/alyx/alyx/uploaded
+      - ${IBLALYX_ROOT:-/home/ubuntu/iblalyx}:/home/iblalyx
+      - ${IBLALYX_ROOT:-/home/ubuntu/iblalyx}/management/ibl_reports:/var/www/alyx/alyx/ibl_reports
+      - ${IBLALYX_ROOT:-/home/ubuntu/iblalyx}/management/ibl_reports/templates:/var/www/alyx/alyx/templates/ibl_reports
     depends_on:
       - postgres
   postgres:
