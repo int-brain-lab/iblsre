@@ -1,0 +1,20 @@
+# IBL-specific overlay on top of the generic alyx base compose (cortex-lab/alyx
+# deploy/app/docker-compose.yaml). Re-adds the iblalyx pieces that were removed from
+# the base compose so it stays server-agnostic. Apply with:
+#   docker compose -f <alyx>/deploy/app/docker-compose.yaml -f docker-compose.override.yaml up -d
+#
+# `command` fully replaces the base command (compose does not merge it), so it repeats
+# the base steps and prepends the iblalyx requirements install. The iblalyx/ibl_reports
+# volumes are appended to the base volume list.
+services:
+  alyx_apache:
+    command: >
+      bash -c "pip install --no-cache-dir -r /home/iblalyx/requirements.txt &&
+               python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
+               /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
+               chown www-data:www-data -fR /var/log/apache2 &&
+               /usr/sbin/apache2ctl -DFOREGROUND"
+    volumes:
+      - ${IBLALYX_ROOT:-/home/ubuntu/iblalyx}:/home/iblalyx
+      - ${IBLALYX_ROOT:-/home/ubuntu/iblalyx}/management/ibl_reports:/var/www/alyx/alyx/ibl_reports
+      - ${IBLALYX_ROOT:-/home/ubuntu/iblalyx}/management/ibl_reports/templates:/var/www/alyx/alyx/templates/ibl_reports

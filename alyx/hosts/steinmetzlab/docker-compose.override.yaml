@@ -1,0 +1,10 @@
+# Steinmetzlab overlay on top of the generic alyx base compose
+# (cortex-lab/alyx deploy/app/docker-compose.yaml).
+#
+# Only difference from the base: mounts the lab-specific settings_lab.py (kept
+# sops-encrypted in the private ibldevtools/config/alyx-steinmetzlab/; decrypt it to
+# ALYX_SETTINGS_LAB on the host). Inherits the base startup command unchanged.
+services:
+  alyx_apache:
+    volumes:
+      - ${ALYX_SETTINGS_LAB:-/home/ubuntu/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
