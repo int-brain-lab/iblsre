@@ -1,6 +1,9 @@
 # Cortexlab overlay on top of the generic alyx base compose
 # (cortex-lab/alyx deploy/app/docker-compose.yaml).
 #
+# Deployed via `ansible_deploy_alyx.yaml -e alyx_hostname=cortexlab`, which copies this
+# file into ~/app and lists it in ~/app/.env's COMPOSE_FILE for a plain `docker compose up -d`.
+#
 # Differences from the base:
 #   - installs django_ses (email via AWS SES) at startup;
 #   - mounts the lab-specific settings_lab.py (kept sops-encrypted in the private

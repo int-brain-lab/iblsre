@@ -1,6 +1,9 @@
 # Steinmetzlab overlay on top of the generic alyx base compose
 # (cortex-lab/alyx deploy/app/docker-compose.yaml).
 #
+# Deployed via `ansible_deploy_alyx.yaml -e alyx_hostname=steinmetzlab`, which copies this
+# file into ~/app and lists it in ~/app/.env's COMPOSE_FILE for a plain `docker compose up -d`.
+#
 # Only difference from the base: mounts the lab-specific settings_lab.py (kept
 # sops-encrypted in the private ibldevtools/config/alyx-steinmetzlab/; decrypt it to
 # ALYX_SETTINGS_LAB on the host). Inherits the base startup command unchanged.

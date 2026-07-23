@@ -1,0 +1,114 @@
+# Deploys/updates Alyx from the alyx-repo-sourced compose (cortex-lab/alyx deploy/app/).
+# Run this on the target server itself (see ansible_setup_alyx_server.yaml for one-time
+# host prep — swap, log dir, iblalyx clone — which must have already been run).
+#
+# ansible-playbook ansible_deploy_alyx.yaml -e alyx_hostname=alyx-test -e alyx_version=3.6.0
+#
+# alyx_hostname must match a directory under alyx/hosts/ in this iblsre checkout (the
+# one whose docker-compose.host.yaml, if any, applies to this server). alyx_version must
+# be a tag that exists on cortex-lab/alyx (e.g. a release version, or a `dev*` tag for a
+# preflight check against a candidate build).
+#
+# Populates ~/app (NOT a git checkout — plain files ansible manages) with:
+#   - docker-compose.yaml       fetched fresh from the alyx_version tag (source of truth)
+#   - template.env              fetched alongside it, for reference when merging .env
+#   - docker-compose.ibl.yaml   copied from this iblsre checkout (IBL-wide overlay)
+#   - docker-compose.host.yaml  copied from alyx/hosts/<alyx_hostname>/, if it exists
+# then ensures ~/app/.env's COMPOSE_FILE lists exactly the files present, so a plain
+# `docker compose up -d` in ~/app needs no `-f` flags. ~/app/.env itself is NOT managed
+# here — it must already exist (decrypted from the private ibldevtools sops copy) before
+# the first run.
+---
+- name: Deploy/update Alyx from the alyx-repo-sourced compose
+  hosts: localhost
+  become: yes
+  become_user: ubuntu
+  vars:
+    repo_dir: /home/ubuntu/Documents/PYTHON
+    app_dir: /home/ubuntu/app
+    alyx_raw_base: "https://raw.githubusercontent.com/cortex-lab/alyx/{{ alyx_version }}/deploy/app"
+    host_override_src: "{{ repo_dir }}/iblsre/alyx/hosts/{{ alyx_hostname }}/docker-compose.host.yaml"
+
+  tasks:
+    - name: Require alyx_hostname and alyx_version
+      assert:
+        that:
+          - alyx_hostname is defined
+          - alyx_version is defined
+        fail_msg: "Pass both -e alyx_hostname=<host> -e alyx_version=<tag>"
+
+    - name: Ensure ~/app exists
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Fail fast if ~/app/.env is missing
+      stat:
+        path: "{{ app_dir }}/.env"
+      register: env_file
+
+    - name: Assert .env is present
+      assert:
+        that: env_file.stat.exists
+        fail_msg: >-
+          {{ app_dir }}/.env is missing. Decrypt this server's env from the private
+          ibldevtools/config/{{ alyx_hostname }}/ and place it there before deploying.
+
+    - name: Fetch the release's base compose + template.env from the alyx repo
+      get_url:
+        url: "{{ alyx_raw_base }}/{{ item }}"
+        dest: "{{ app_dir }}/{{ item }}"
+        mode: '0644'
+        force: yes
+      loop:
+        - docker-compose.yaml
+        - template.env
+
+    - name: Copy the IBL-wide overlay from this iblsre checkout
+      copy:
+        src: "{{ repo_dir }}/iblsre/alyx/containers/deploy-web/docker-compose.ibl.yaml"
+        dest: "{{ app_dir }}/docker-compose.ibl.yaml"
+        remote_src: yes
+        mode: '0644'
+
+    - name: Check whether this host has a host-specific override
+      stat:
+        path: "{{ host_override_src }}"
+      register: host_override
+
+    - name: Copy the host-specific override, if this host has one
+      copy:
+        src: "{{ host_override_src }}"
+        dest: "{{ app_dir }}/docker-compose.host.yaml"
+        remote_src: yes
+        mode: '0644'
+      when: host_override.stat.exists
+
+    - name: Remove a stale host override if this host no longer has one
+      file:
+        path: "{{ app_dir }}/docker-compose.host.yaml"
+        state: absent
+      when: not host_override.stat.exists
+
+    - name: Compute the COMPOSE_FILE list for this host
+      set_fact:
+        compose_files: >-
+          {{ (['docker-compose.yaml', 'docker-compose.ibl.yaml']
+              + (['docker-compose.host.yaml'] if host_override.stat.exists else [])) }}
+
+    - name: Ensure COMPOSE_FILE in .env matches the files actually present
+      lineinfile:
+        path: "{{ app_dir }}/.env"
+        regexp: '^COMPOSE_FILE='
+        line: "COMPOSE_FILE={{ compose_files | join(':') }}"
+
+    - name: Pull the new image
+      command: docker compose pull
+      args:
+        chdir: "{{ app_dir }}"
+
+    - name: Recreate containers that changed
+      command: docker compose up -d --remove-orphans
+      args:
+        chdir: "{{ app_dir }}"
