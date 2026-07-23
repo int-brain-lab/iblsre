@@ -1,0 +1,20 @@
+# Cortexlab overlay on top of the generic alyx base compose
+# (cortex-lab/alyx deploy/app/docker-compose.yaml).
+#
+# Differences from the base:
+#   - installs django_ses (email via AWS SES) at startup;
+#   - mounts the lab-specific settings_lab.py (kept sops-encrypted in the private
+#     ibldevtools/config/alyx-cortexlab/; decrypt it to ALYX_SETTINGS_LAB on the host).
+#
+# `command` fully replaces the base command (compose does not merge it), so it repeats
+# the base steps with the django_ses install prepended.
+services:
+  alyx_apache:
+    command: >
+      bash -c "pip install django_ses &&
+               python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
+               /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
+               chown www-data:www-data -fR /var/log/apache2 &&
+               /usr/sbin/apache2ctl -DFOREGROUND"
+    volumes:
+      - ${ALYX_SETTINGS_LAB:-/home/ubuntu/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
