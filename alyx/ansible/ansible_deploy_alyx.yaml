@@ -116,6 +116,10 @@
         regexp: '^COMPOSE_FILE='
         line: "COMPOSE_FILE={{ compose_files | join(':') }}"
 
+    - name: Clear dangling images to make room for the pull
+      command: docker image prune -f
+      changed_when: false
+
     - name: Pull the new image
       command: docker compose pull
       args:
