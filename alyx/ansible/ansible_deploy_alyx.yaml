@@ -7,7 +7,8 @@
 # alyx_hostname must match a directory under alyx/hosts/ in this iblsre checkout (the
 # one whose docker-compose.host.yaml, if any, applies to this server). alyx_version must
 # be a tag that exists on cortex-lab/alyx (e.g. a release version, or a `dev*` tag for a
-# preflight check against a candidate build).
+# preflight check against a candidate build) — if omitted, it defaults to whatever GitHub
+# currently reports as the latest release.
 #
 # Populates ~/app (NOT a git checkout — plain files ansible manages) with:
 #   - docker-compose.yaml       fetched fresh from the alyx_version tag (source of truth)
@@ -30,12 +31,24 @@
     host_override_src: "{{ repo_dir }}/iblsre/alyx/hosts/{{ alyx_hostname }}/docker-compose.host.yaml"
 
   tasks:
-    - name: Require alyx_hostname and alyx_version
+    - name: Require alyx_hostname
       assert:
         that:
           - alyx_hostname is defined
-          - alyx_version is defined
-        fail_msg: "Pass both -e alyx_hostname=<host> -e alyx_version=<tag>"
+        fail_msg: "Pass -e alyx_hostname=<host>"
+
+    - name: Resolve the latest alyx release, if alyx_version was not given
+      when: alyx_version is not defined
+      block:
+        - name: Query the GitHub API for the latest release
+          uri:
+            url: https://api.github.com/repos/cortex-lab/alyx/releases/latest
+            return_content: yes
+          register: latest_release
+
+        - name: Default alyx_version to the resolved tag
+          set_fact:
+            alyx_version: "{{ latest_release.json.tag_name }}"
 
     - name: Ensure ~/app exists
       file:
