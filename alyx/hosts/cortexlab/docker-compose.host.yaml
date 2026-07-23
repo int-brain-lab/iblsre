@@ -14,7 +14,7 @@
 services:
   alyx_apache:
     command: >
-      bash -c "pip install django_ses &&
+      bash -c "uv pip install django_ses &&
                python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
                /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
                chown www-data:www-data -fR /var/log/apache2 &&

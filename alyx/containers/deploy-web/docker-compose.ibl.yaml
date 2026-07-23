@@ -13,7 +13,7 @@
 services:
   alyx_apache:
     command: >
-      bash -c "pip install --no-cache-dir -r /home/iblalyx/requirements.txt &&
+      bash -c "uv pip install --no-cache -r /home/iblalyx/requirements.txt &&
                python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
                /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
                chown www-data:www-data -fR /var/log/apache2 &&
