@@ -1,7 +1,11 @@
 # IBL-specific overlay on top of the generic alyx base compose (cortex-lab/alyx
 # deploy/app/docker-compose.yaml). Re-adds the iblalyx pieces that were removed from
-# the base compose so it stays server-agnostic. Apply with:
-#   docker compose -f <alyx>/deploy/app/docker-compose.yaml -f docker-compose.override.yaml up -d
+# the base compose so it stays server-agnostic.
+#
+# Deployed via `ansible_deploy_alyx.yaml`, which copies this file into the server's
+# ~/app directory and lists it in ~/app/.env's COMPOSE_FILE so a plain
+# `docker compose up -d` there picks it up automatically alongside the base compose
+# and (if present) docker-compose.host.yaml — no `-f` flags needed at deploy time.
 #
 # `command` fully replaces the base command (compose does not merge it), so it repeats
 # the base steps and prepends the iblalyx requirements install. The iblalyx/ibl_reports

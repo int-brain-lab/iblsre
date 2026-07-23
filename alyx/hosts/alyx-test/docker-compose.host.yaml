@@ -2,14 +2,11 @@
 #
 # alyx-test is an IBL server that serves ibl_reports, so it needs the iblalyx overlay
 # on top of the generic base compose. This file only adds the host-specific persistent
-# mounts; the iblalyx command + bind-mounts come from the shared overlay. Deploy by
-# stacking all three, base first:
+# mounts; the iblalyx command + bind-mounts come from docker-compose.ibl.yaml.
 #
-#   docker compose \
-#     -f <alyx>/deploy/app/docker-compose.yaml \
-#     -f <iblsre>/alyx/containers/deploy-web/docker-compose.override.yaml \
-#     -f <iblsre>/alyx/hosts/alyx-test/docker-compose.override.yaml \
-#     up -d
+# Deployed via `ansible_deploy_alyx.yaml -e alyx_hostname=alyx-test`, which copies this
+# file into ~/app and lists it in ~/app/.env's COMPOSE_FILE so a plain
+# `docker compose up -d` in ~/app picks up all three files — no `-f` flags needed.
 #
 # Requires iblalyx cloned on the host (ansible_setup_alyx_server.yaml does this, to
 # /home/ubuntu/iblalyx) so the overlay's bind-mount has a source.
