@@ -1,0 +1,16 @@
+{
+	"data": "ENC[AES256_GCM,data:5BN/iegquS+sEYL5Pto0QdUDLI++qGjtDZzwtrWC9qbwjJDduqKH1/B9x76SQYBDNyd8+N7lBpAkAUcSXTM4rR1NUn7FsxDHRAbnLwe/MNKCAYu0Q8pcCLcS3Qt6MXf2HP0OysLt4RdevKYS6ty8j2h+OLeHuBV2ijvul2TRphS8+ttnrUyylW4T6vpy7l5niVIboXQregl8CVOsX6JbGsLmwKihy0+5z6tVCAw2xCQiYU6FdPxfqW/D4Mjp/d4DXITH8V+FKvJnJkrsCaG8kTGczy20+My5ncFG2I5ETQG5DmAS+aUd7mrQ1DxizkNzFiAiZsF2NYaORy/sxq0gF5H26U9IzEWhbdt06ACckegI+r85mPf1Xd8FN9YY9nl0edTlZg1Rw/ernuE30c6m55qd/WCAyd5yr39OOFwI098qVOlA2BURayFY0eJ9VxJXzB5GrGrWWztHhEVtAkyLIoPWglv2itDIOfFUrW/bZoy7wqm5+/H0/cTlCNoDZjtE0tcAL/3/yxUslA47fvP9AYPhkrFO+eyG858rLC+yhAhexxKSPFw8ocYZ/8UwO9U5uPfeipcdP1BwU4V3KrYp/CEP94rPReVu13KRkKqxAz6YEzn7Wf8EG3cPHVqgZGBLnPHjOygyumIcRMe2dzNJWtN7jwk3qLKxl+2s2q3s3tS9EG8k1HMl2uvetKcSodiPypIarhrr0wdx2ihxDS6uzARMFOCeLz2lhb5I+/2DvHDjMSFBYyDDp8bauoH+x4git/XshG4/eCbyZQqpo7atadSoHpnq3LK/OF5SCYiuwrrN4qKMGZp+BK6j+N69weoGWBxdKZQSYiSTrdZG1Ihtg5/t+vzDSXrAlLYKbuD0rK0pbMGlhGLhAxj3Jd1OIBSchnTKMMh+t80PA8HD4T+K+Oeo18p6XpnblfZ1oMyPKco0HcjGR930jW8jbQ87+Qx6N80fUK+nFEzMOmupJ6+BvNCMPr8dwWWp/jWy4QYfAZ+scP7LV1DwPGHZAK5OmFl0lIeH0kOj1yHlGbsoxNP2HngvT5C1bFZnDk+L0Di61JhSY+tMbe9qO3RtF4o9zund0XeHgE3u6CyaxBuTzOH+UVoDLiVX0avNG8EHs/C1ygsT0WtxOmx/yl/vux+ez669p/8af+OSzUhXp+VFBq5Zml138Onh26CqDmhQhpjxFRegr/uT7Q==,iv:J08n4MVRha2hTMu40uwHLuMjuu015dg64kSczHNbK78=,tag:DpoYxeX+Q/mQW2rmqZkhzw==,type:str]",
+	"sops": {
+		"kms": [
+			{
+				"arn": "arn:aws:kms:eu-west-2:537761737250:key/cfed3daf-e447-4bd4-b43c-af1347b5aa02",
+				"created_at": "2025-12-16T12:46:05Z",
+				"enc": "AQICAHi3TDW10Xdifar2WWLTjWfAfb/W+Qz2dtnR4igE6cLfNgGJWnHkloMhThZHlwYvjKH/AAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMqZzkGkHV9P1Sq4StAgEQgDs+fcgbnzDGipps2/UtPXQTjVO78KIUB01UKQBy3KJpcNMFdQCNUVLlDVgqzhUILFzos0TG+CKBGqBhGw==",
+				"aws_profile": ""
+			}
+		],
+		"lastmodified": "2025-12-16T12:46:48Z",
+		"mac": "ENC[AES256_GCM,data:bG/wv5I3fzqLOTmKrCQBnrZqrmvq71ZDQMG384+GRlyBfBjXUr+R1pCpODJQ7ENKooJTm624R9upMH75Y9s3CsrV5cNTlhLlNDbq1BpbNstMDo9FdZEyO2R+5biW8Z099E37KFO7NVj+qszKht6fduF1RFV6oEUdHvnB9ZeGLIc=,iv:wxUU3HsvTImoe13COMbdOQ1OwVLLEBvkWyEd5T+sxcg=,tag:3cHugNZ97rze2mNCZEJpuA==,type:str]",
+		"version": "3.11.0"
+	}
+}
