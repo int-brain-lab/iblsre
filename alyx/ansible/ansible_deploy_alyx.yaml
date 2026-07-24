@@ -81,7 +81,7 @@
 
     - name: Copy the IBL-wide overlay from this iblsre checkout
       copy:
-        src: "{{ repo_dir }}/iblsre/alyx/containers/deploy-web/docker-compose.ibl.yaml"
+        src: "{{ repo_dir }}/iblsre/alyx/hosts/docker-compose.ibl.yaml"
         dest: "{{ app_dir }}/docker-compose.ibl.yaml"
         remote_src: yes
         mode: '0644'
