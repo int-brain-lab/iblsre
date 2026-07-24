@@ -1,0 +1,8 @@
+# openalyx overlay: RDS-backed, no local postgres ever used, so disable the base compose's
+# `postgres` service. `profiles` alone isn't enough -- alyx_apache's plain `depends_on` would
+# still force it to start, hence the `!override` to actually clear that dependency.
+services:
+  postgres:
+    profiles: ["unused"]
+  alyx_apache:
+    depends_on: !override []
