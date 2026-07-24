@@ -1,0 +1,10 @@
+# alyx-prod overlay: RDS-backed, no local postgres used -- disabled below (profiles alone
+# isn't enough, also needs !override on depends_on, see openalyx's overlay for why).
+#
+# NB: unverified assumption, carried over from the openalyx/cortexlab pattern -- confirm
+# this host's actual POSTGRES_HOST before deploying.
+services:
+  alyx_apache:
+    depends_on: !override []
+  postgres:
+    profiles: ["unused"]

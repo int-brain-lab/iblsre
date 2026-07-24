@@ -7,7 +7,14 @@
 # Only difference from the base: mounts the lab-specific settings_lab.py (kept
 # sops-encrypted in the private ibldevtools/config/alyx-steinmetzlab/; decrypt it to
 # ALYX_SETTINGS_LAB on the host). Inherits the base startup command unchanged.
+#
+# postgres disabled below assuming RDS/no-local-db like the other overlays -- verify this
+# actually holds for steinmetzlab before deploying (docs elsewhere say it runs local
+# postgres, not RDS).
 services:
   alyx_apache:
     volumes:
       - ${ALYX_SETTINGS_LAB:-/home/ubuntu/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
+    depends_on: !override []
+  postgres:
+    profiles: ["unused"]

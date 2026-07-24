@@ -11,6 +11,9 @@
 #
 # `command` fully replaces the base command (compose does not merge it), so it repeats
 # the base steps with the django_ses install prepended.
+#
+# RDS-backed, no local postgres used -- disabled below (profiles alone isn't enough,
+# also needs !override on depends_on, see openalyx's overlay for why).
 services:
   alyx_apache:
     command: >
@@ -21,3 +24,6 @@ services:
                /usr/sbin/apache2ctl -DFOREGROUND"
     volumes:
       - ${ALYX_SETTINGS_LAB:-/home/ubuntu/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
+    depends_on: !override []
+  postgres:
+    profiles: ["unused"]
