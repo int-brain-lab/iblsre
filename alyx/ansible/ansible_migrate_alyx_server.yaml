@@ -35,14 +35,12 @@
         group: ubuntu
         mode: '0755'
 
-    - name: Disable the leftover host-level apache2 logrotate config
-      command: mv /etc/logrotate.d/apache2 {{ apache2_logrotate_backup }}
+    # mv + chown as one conditional shell task, not two separate tasks -- moving a root-owned
+    # file out of /etc/logrotate.d/ still needs root, but a *following*, always-run ownership
+    # fix would hard-fail on any host that never had this leftover config in the first place
+    # (e.g. openalyx never had apache2 installed natively, so there's nothing to move).
+    - name: Disable the leftover host-level apache2 logrotate config, if present
+      shell: mv /etc/logrotate.d/apache2 {{ apache2_logrotate_backup }} && chown ubuntu:ubuntu {{ apache2_logrotate_backup }}
       args:
         creates: "{{ apache2_logrotate_backup }}"
         removes: /etc/logrotate.d/apache2
-
-    - name: Fix ownership of the moved-aside backup
-      file:
-        path: "{{ apache2_logrotate_backup }}"
-        owner: ubuntu
-        group: ubuntu
