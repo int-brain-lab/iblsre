@@ -1,0 +1,48 @@
+# One-off playbook for servers that predate the alyx-sourced compose + in-container logging
+# flow (iblsre#30/#32, alyx release 3.6.0+): re-runs the standard setup playbook (idempotent,
+# safe on an already-set-up host) and then applies fixes only needed on that older generation
+# of hosts. Delete this file once every host in alyx/hosts/ has been run through it once --
+# ansible_setup_alyx_server.yaml remains the permanent per-server setup playbook.
+#
+# ansible-playbook ansible_migrate_alyx_server.yaml
+---
+- name: Re-run the standard server setup (idempotent)
+  import_playbook: ansible_setup_alyx_server.yaml
+
+- name: One-off fixes for servers migrating to the alyx-sourced compose
+  hosts: localhost
+  become: yes
+  vars:
+    apache2_logrotate_backup: /home/ubuntu/logrotate.d.disabled/apache2
+
+  tasks:
+    # Found on alyx-test (2026-07-24): a leftover host-level logrotate config from when
+    # apache2 was installed natively on the host (now removed -- `dpkg -l apache2` shows
+    # state `rc`, config-files-remaining). systemd's logrotate.timer fires it daily at
+    # 00:00 UTC against the bind-mounted /var/log/apache2/*.log, recreating the files
+    # root:adm-owned. The containerized apache/django processes run as www-data and can't
+    # write to them, so Django's logging handler fails to configure, django.setup() raises,
+    # and the WSGI app 500s on every request until the container is restarted (its startup
+    # command re-applies chown). The container's own apache now rotates these logs itself
+    # via piped `rotatelogs` (iblsre#30), so this host-level rotation is not just stale, it
+    # actively fights the in-container mechanism -- disable it outright rather than fixing
+    # its `create` ownership, since it serves no purpose here anymore.
+    - name: Ensure the disabled-config backup directory exists
+      file:
+        path: /home/ubuntu/logrotate.d.disabled
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Disable the leftover host-level apache2 logrotate config
+      command: mv /etc/logrotate.d/apache2 {{ apache2_logrotate_backup }}
+      args:
+        creates: "{{ apache2_logrotate_backup }}"
+        removes: /etc/logrotate.d/apache2
+
+    - name: Fix ownership of the moved-aside backup
+      file:
+        path: "{{ apache2_logrotate_backup }}"
+        owner: ubuntu
+        group: ubuntu
