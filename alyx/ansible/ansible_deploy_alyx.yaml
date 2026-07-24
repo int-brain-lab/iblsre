@@ -18,7 +18,8 @@
 # then ensures ~/app/.env's COMPOSE_FILE lists exactly the files present, so a plain
 # `docker compose up -d` in ~/app needs no `-f` flags. ~/app/.env itself is NOT managed
 # here — it must already exist (decrypted from the private ibldevtools sops copy) before
-# the first run.
+# the first run. Also runs `manage.py migrate` against the running container after bringing
+# it up, so a release that includes a schema change doesn't require a separate manual step.
 ---
 - name: Deploy/update Alyx from the alyx-repo-sourced compose
   hosts: localhost
@@ -129,3 +130,17 @@
       command: docker compose up -d --remove-orphans
       args:
         chdir: "{{ app_dir }}"
+
+    # The image/container update above never touches the database on its own -- nothing in
+    # the compose command or this playbook ran `migrate` before this task existed. A schema
+    # change would then silently sit unapplied until something else happened to run it (e.g.
+    # alyx-test's unrelated nightly cache-reset cron), which isn't true on every host. Retry
+    # briefly since postgres may not have finished accepting connections yet right after
+    # `up -d`.
+    - name: Apply database migrations
+      command: docker exec alyx_apache python manage.py migrate --noinput
+      register: migrate_result
+      changed_when: "'No migrations to apply' not in migrate_result.stdout"
+      until: migrate_result.rc == 0
+      retries: 5
+      delay: 5
