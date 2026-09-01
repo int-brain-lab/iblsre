@@ -1,0 +1,44 @@
+# Per-host tunables for the alyx deploy playbook.
+#
+# These live HERE, not in the playbook's `vars:` block, because of Ansible's variable
+# precedence. Play vars (precedence 12) outrank inventory host vars (8-9), so a default
+# defined in the play silently overrides anything inventory.yaml sets per host -- the
+# setting appears to be applied, is visible in the inventory, and does nothing. That bug
+# shipped once: cortexlab's alyx_apply_ibl_overlay=false and alyx_tls_check_from=skip were
+# both ignored, and it was deployed with an overlay it was explicitly meant not to get.
+#
+# inventory group_vars/all is precedence 4, comfortably below host vars, so per-host
+# settings in inventory.yaml now win as intended. `all` rather than the `alyx` group so
+# these also apply on the `-e alyx_target=localhost` path, where the target is not a
+# member of that group.
+#
+# Anything added here must be overridable per host. Values the playbook derives for itself
+# (paths, URLs, the snapshot filename) stay in the play's own vars: block.
+
+# Whether this host gets the IBL-wide overlay (iblalyx mounts / requirements install).
+alyx_apply_ibl_overlay: true
+
+# Set false only for a host whose database is disposable and reloaded from elsewhere.
+# Do not set it globally.
+alyx_snapshot: true
+
+# Free space required for the dump, as a multiple of the database's on-disk size.
+# pg_database_size is the UNCOMPRESSED size; a -Fc dump is compressed and measured 5.4x
+# smaller on openalyx and 7.4x on alyx-prod, so 0.6 leaves roughly 3x margin over the
+# expected dump. Raise it for a database expected to compress badly (already-compressed
+# blobs). Do not raise it past what a host's disk can actually satisfy -- a threshold that
+# can never pass is not a safety check.
+alyx_snapshot_space_factor: 0.6
+
+# Dumps kept per host after a successful deploy. Pruning happens only once the deploy and
+# all post-checks have passed, so a failed run never destroys an older rollback point.
+alyx_snapshot_keep: 3
+
+# Free space required on the docker data root before pulling. The alyx_apache image
+# measures ~1.75 GB, so 3 GB leaves headroom for it to coexist with the outgoing image
+# until the container is recreated.
+alyx_min_free_pull_gb: 3
+
+# Where the post-deploy TLS check runs: control_node (default, also proves the site is
+# publicly reachable), host (proves TLS only), or skip.
+alyx_tls_check_from: control_node

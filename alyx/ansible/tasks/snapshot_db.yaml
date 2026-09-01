@@ -1,0 +1,185 @@
+# Pre-deploy database snapshot, so a bad release (specifically a bad migration) can be
+# rolled back. Included by ansible_deploy_alyx.yaml before anything is changed on the host.
+#
+# Produces a per-database pg_dump in custom format (-Fc) under {{ backup_dir }}. Restore with:
+#   pg_restore --clean --if-exists -h <host> -p <port> -U <user> -d <db> <file>
+#
+# Why a per-database dump rather than a native RDS snapshot: RDS snapshots are
+# INSTANCE-level, and RDS instance `openlayx` carries both openalyx (database `public`)
+# and cazettes (database `cazettes_alyx`). Restoring an instance snapshot taken for
+# openalyx would silently roll cazettes back with it. A pg_dump has the right granularity
+# and works identically on the local-container hosts, so both host types share one path.
+#
+# An RDS snapshot is still worth taking by hand before a genuinely risky migration -- it is
+# cheap and instance-wide -- but it is a complement to this, not a substitute.
+
+- name: Ensure the backup directory exists
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+    mode: '0700'
+
+- name: Decide whether this host talks to a local postgres container or to RDS
+  set_fact:
+    alyx_db_is_local: "{{ alyx_env.POSTGRES_HOST == 'alyx_postgres' }}"
+
+- name: Report the database this snapshot will cover
+  debug:
+    msg: >-
+      {{ inventory_hostname }}: database {{ alyx_env.POSTGRES_DB }} on
+      {{ alyx_env.POSTGRES_HOST }}:{{ alyx_env.POSTGRES_PORT }}
+      ({{ 'local container' if alyx_db_is_local else 'RDS' }})
+
+- name: Ensure the postgres client image is available for dumping RDS
+  # RDS hosts disable the compose postgres service (profiles: ["unused"]), so `docker
+  # compose pull` never fetches it and there is no running container to exec into. Pull it
+  # explicitly; a v17 client dumps any older server fine, the reverse is what pg_dump
+  # refuses. Pulled before the space check below since it costs disk too.
+  command: docker pull postgres:17
+  when: not alyx_db_is_local
+  changed_when: false
+
+- block:
+    - name: Create a short-lived env file holding only the POSTGRES_* settings
+      # Avoids passing the password on a `docker run -e` command line (visible in ps and
+      # in docker inspect), and avoids handing the container the whole .env, which also
+      # holds DJANGO_SECRET_KEY and AWS credentials. tempfile is 0600 and is removed in
+      # the always: block below even if the dump fails.
+      tempfile:
+        state: file
+        suffix: _pgenv
+      register: pgenv
+      when: not alyx_db_is_local
+
+    - name: Read the database password from ~/app/.env
+      # Read on its own, and never echoed: the main playbook's parse task prints each
+      # key=value pair it handles, which is useful for every other setting and unacceptable
+      # for this one.
+      shell: |
+        set -euo pipefail
+        grep -E '^POSTGRES_PASSWORD=' {{ app_dir }}/.env | sed 's/^POSTGRES_PASSWORD=//'
+      args:
+        executable: /bin/bash
+      when: not alyx_db_is_local
+      register: pgpw_raw
+      changed_when: false
+      no_log: true
+
+    - name: Populate the env file, stripping the quotes .env wraps values in
+      # NOT a raw `grep ... > file` of ~/app/.env. Values there may be single- or
+      # double-quoted (POSTGRES_PASSWORD is), and while docker compose's `env_file:`
+      # strips those quotes, `docker run --env-file` does NOT -- it would pass the
+      # quote characters as part of the password and the connection would fail
+      # authentication, which is exactly what happened on openalyx the first time this
+      # ran. Rebuild the file from the already-parsed values instead, applying the same
+      # quote stripping the main playbook uses.
+      #
+      # PGSSLMODE=require rather than psql's default `prefer`: RDS accepts TLS, and
+      # without this a failure silently retries unencrypted and reports a confusing
+      # pg_hba error instead of the real one.
+      copy:
+        dest: "{{ pgenv.path }}"
+        mode: '0600'
+        content: |
+          POSTGRES_HOST={{ alyx_env.POSTGRES_HOST }}
+          POSTGRES_PORT={{ alyx_env.POSTGRES_PORT }}
+          POSTGRES_USER={{ alyx_env.POSTGRES_USER }}
+          POSTGRES_DB={{ alyx_env.POSTGRES_DB }}
+          POSTGRES_PASSWORD={{ pgpw_raw.stdout | trim | regex_replace('^["\x27]|["\x27]$', '') }}
+          PGSSLMODE=require
+      when: not alyx_db_is_local
+      no_log: true
+
+    - name: Measure the database size on disk
+      # pg_database_size is the uncompressed on-disk size. A -Fc dump is compressed and in
+      # practice lands well under this, so requiring free space >= size * factor is
+      # deliberately conservative. Lower alyx_snapshot_space_factor if a host is tight.
+      shell: |
+        set -euo pipefail
+        {% if alyx_db_is_local %}
+        docker exec alyx_postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -qtAX -U "$POSTGRES_USER" -d "$POSTGRES_DB" -p "$POSTGRES_PORT" -c "SELECT pg_database_size(current_database())"'
+        {% else %}
+        docker run --rm --env-file {{ pgenv.path }} postgres:17 sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -qtAX -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT pg_database_size(current_database())"'
+        {% endif %}
+      args:
+        executable: /bin/bash
+      register: db_size_raw
+      changed_when: false
+
+    - name: Measure free space on the filesystem holding the backup directory
+      command: df --output=avail -B1 {{ backup_dir }}
+      register: backup_avail_raw
+      changed_when: false
+
+    - name: Set the space facts
+      set_fact:
+        db_size_bytes: "{{ db_size_raw.stdout | trim | int }}"
+        backup_avail_bytes: "{{ backup_avail_raw.stdout_lines[-1] | trim | int }}"
+
+    - name: Assert there is room for the dump
+      assert:
+        that:
+          - db_size_bytes | int > 0
+          - (backup_avail_bytes | int) >= (db_size_bytes | int) * (alyx_snapshot_space_factor | float)
+        fail_msg: >-
+          Not enough free space for a pre-deploy dump of {{ alyx_env.POSTGRES_DB }} on
+          {{ inventory_hostname }}: database is
+          {{ (db_size_bytes | int / 1073741824) | round(2) }} GB, only
+          {{ (backup_avail_bytes | int / 1073741824) | round(2) }} GB free on
+          {{ backup_dir }} (need {{ alyx_snapshot_space_factor }}x). Reclaim space --
+          `docker system prune --all --force`, or remove old dumps in {{ backup_dir }} --
+          then re-run. Deploy has NOT started; nothing on this host has changed yet.
+        success_msg: >-
+          {{ (db_size_bytes | int / 1073741824) | round(2) }} GB database,
+          {{ (backup_avail_bytes | int / 1073741824) | round(2) }} GB free.
+
+    - name: Take the pre-deploy dump
+      shell: |
+        set -euo pipefail
+        umask 077
+        {% if alyx_db_is_local %}
+        docker exec alyx_postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB" -p "$POSTGRES_PORT"' > {{ snapshot_path }}
+        {% else %}
+        docker run --rm --env-file {{ pgenv.path }} postgres:17 sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -Fc -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > {{ snapshot_path }}
+        {% endif %}
+      args:
+        executable: /bin/bash
+
+  always:
+    - name: Remove the short-lived env file
+      file:
+        path: "{{ pgenv.path }}"
+        state: absent
+      when: pgenv.path is defined
+      changed_when: false
+
+- name: Stat the dump
+  stat:
+    path: "{{ snapshot_path }}"
+    checksum_algorithm: sha256
+  register: snapshot_stat
+
+- name: Read the dump's format header
+  # A -Fc dump starts with the literal magic "PGDMP". Catches the case where the pipeline
+  # produced a file but pg_dump actually wrote an error (set -o pipefail covers the exit
+  # code; this covers a zero-exit truncation).
+  command: head -c 5 {{ snapshot_path }}
+  register: snapshot_magic
+  changed_when: false
+
+- name: Assert the dump is present and well-formed before allowing the deploy to proceed
+  assert:
+    that:
+      - snapshot_stat.stat.exists
+      - snapshot_stat.stat.size | int > 1024
+      - snapshot_magic.stdout == 'PGDMP'
+    fail_msg: >-
+      Pre-deploy dump at {{ snapshot_path }} is missing, empty or not a valid pg_dump
+      custom-format archive. Refusing to deploy without a rollback point.
+    success_msg: >-
+      Rollback point: {{ snapshot_path }}
+      ({{ (snapshot_stat.stat.size | int / 1048576) | round(1) }} MB)
+
+- name: Record where the rollback point is
+  set_fact:
+    alyx_rollback_path: "{{ snapshot_path }}"

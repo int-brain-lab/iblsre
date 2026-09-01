@@ -1,0 +1,90 @@
+# Inventory for remote Alyx deploys, run from a control node (currently mbox) that has
+# the per-host SSH keys and an iblsre checkout.
+#
+#   ansible-playbook ansible_deploy_alyx.yaml -e alyx_version=3.6.4
+#   ansible-playbook ansible_deploy_alyx.yaml -e alyx_version=3.6.4 --limit alyx-test
+#
+# `ansible_host` is an alias from the control node's ~/.ssh/config, not a hostname --
+# ssh resolves the real address, port, user and IdentityFile from there, so no key paths
+# or endpoints live in this (public) repo.
+#
+# HOST ORDER MATTERS. The play runs `serial: 1` with `order: inventory`, so hosts are
+# updated strictly one at a time in the order listed here, and `any_errors_fatal: true`
+# aborts the whole rollout the moment one fails. alyx-test is therefore first: if a
+# release is bad, it stops there and production is never touched.
+#
+# Per-host vars:
+#   alyx_hostname        directory under alyx/hosts/ supplying this host's overlay. NOT
+#                        the same string as the ssh alias for several hosts -- that
+#                        mismatch is exactly what the identity assert in the playbook
+#                        guards against.
+#   expected_server_name APACHE_SERVER_NAME that must be present in the host's ~/app/.env.
+#                        The playbook refuses to deploy if it disagrees, which catches
+#                        "right playbook, wrong box" before anything is overwritten.
+#   alyx_tls_check_from  where the post-deploy TLS check runs: control_node (default), host,
+#                        or skip. Only needs setting for hosts the control node cannot
+#                        reach over 443.
+all:
+  children:
+    alyx:
+      hosts:
+
+        alyx-test:
+          ansible_host: alyx-test
+          alyx_hostname: alyx-test
+          expected_server_name: test.alyx.internationalbrainlab.org
+
+        openalyx:
+          ansible_host: openalyx
+          alyx_hostname: openalyx
+          expected_server_name: openalyx.internationalbrainlab.org
+
+        alyx-prod:
+          ansible_host: alyx-prod
+          alyx_hostname: alyx-prod
+          expected_server_name: alyx.internationalbrainlab.org
+
+        # ---- cortexlab ------------------------------------------------------
+        # Different AWS account, so if the control node ever moves to SSM Session Manager
+        # rather than raw .pem keys, this host needs its own path.
+        #
+        # alyx_tls_check_from=skip: cortexlab sits behind a restrictive security group --
+        # 443 is not open to the control node (it is opened only for certbot, via
+        # CERTBOT_SG), so the default control_node check fails on a perfectly good deploy.
+        # `host` does not work either: alyx.cortexlab.net resolves to the public Elastic IP
+        # (35.177.152.209) and the instance cannot hairpin back through the gateway --
+        # measured, both return HTTP 000. The local http://localhost check still runs and
+        # returns 200, so apache is still verified; only the TLS leg is skipped.
+        #
+        # alyx_apply_ibl_overlay=false: cortexlab is the ONLY host without
+        # docker-compose.ibl.yaml -- its COMPOSE_FILE is docker-compose.yaml:
+        # docker-compose.host.yaml. iblalyx is cloned on the box but not mounted into the
+        # container. Enabling the overlay would add three bind mounts, which is a container
+        # spec change and wants to be a deliberate, separate decision rather than a side
+        # effect of a release. Flip to true if cortexlab should run ibl_reports.
+        cortexlab:
+          ansible_host: alyx-cortexlab
+          alyx_hostname: cortexlab
+          expected_server_name: alyx.cortexlab.net
+          alyx_tls_check_from: skip
+          alyx_apply_ibl_overlay: false
+
+        # ---- steinmetzlab ---------------------------------------------------
+        # The one host with real data in a LOCAL postgres container rather than RDS
+        # so the pre-deploy pg_dump matters most here. Note this box also runs an
+        # unrelated `sortingmanager_postgres` container; the playbook only ever runs
+        # `docker image prune -f` (dangling images), never a broader prune, so that service
+        # is not at risk -- do not "helpfully" widen it.
+        steinmetzlab:
+          ansible_host: alyx-steinmetz
+          alyx_hostname: steinmetzlab
+          expected_server_name: alyx.steinmetzlab.net
+
+        # ---- Deliberately excluded ---------------------------------------------------
+        # cazettes: stays on its own manual procedure (containers/deploy-web). It also
+        #   shares RDS instance `openlayx` with openalyx (database cazettes_alyx), which
+        #   is why rollback here is a per-database pg_dump and not an RDS instance
+        #   snapshot -- an instance snapshot taken for openalyx would capture cazettes,
+        #   and restoring it would roll cazettes back too.
+        # mbox: separate import-container procedure, and is the control node itself.
+        # sdsc: non-containerized, manual deploy procedure.
