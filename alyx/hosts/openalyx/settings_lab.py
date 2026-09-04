@@ -10,6 +10,20 @@ if TIME_ZONE not in zoneinfo.available_timezones():
                      'See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.')
 GLOBUS_CLIENT_ID = os.getenv('GLOBUS_CLIENT_ID')
 SUBJECT_REQUEST_EMAIL_FROM = os.getenv('APACHE_SERVER_ADMIN', 'alyx@localhost')
+
+# %% Public database
+# Uncomment on a public, read-only deployment serving released data. This enables the
+# self-registration page at /signup and hides lab member records from public users, who may
+# then see only redacted users and themselves. See settings.py for the other PUBLIC_SIGNUP_*
+# options and their defaults.
+PUBLIC_DATABASE = True
+
+# Registration confirmation and password reset both send mail, so a public database needs a
+# working email backend. For example, using django_ses (`pip install django-ses`):
+EMAIL_BACKEND = 'django_ses.SESBackend'
+AWS_SES_REGION_NAME = 'eu-west-2'
+AWS_SES_REGION_ENDPOINT = 'email.eu-west-2.amazonaws.com'
+DEFAULT_FROM_EMAIL = 'alyx@example.org'  # must be an SES-verified sender
 DEFAULT_SOURCE = 'IBL'
 DEFAULT_PROTOCOL = '1'
 SUPERUSERS = ('root',)

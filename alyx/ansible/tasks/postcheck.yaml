@@ -1,0 +1,126 @@
+# Post-deploy verification. Included at the end of ansible_deploy_alyx.yaml so the manual
+# checks that used to live in the docs run automatically on every host, every deploy.
+#
+# These assertions are lifted from cortex-lab/alyx deploy/app/test/test-deploy-web.yaml
+# (HTTP 200, apache running, Django can reach the DB) plus the OOM-mitigation and
+# migration checks that were previously copy-pasted by hand after each rollout.
+#
+# NB: test-deploy-web.yaml itself MUST NOT be run against a live host. It binds port 80,
+# and -- because `container_name: alyx_apache` is global rather than project-scoped -- its
+# `docker exec alyx_apache ...` steps and its `always:` block (which chowns /var/log/apache2
+# and runs `docker compose down -v`) would hit the PRODUCTION container, not its own
+# throwaway stack. It is a pre-release test of a locally built image, not a smoke test.
+
+- name: Wait for apache to answer on the host itself
+  # Accepts a redirect: production hosts send HTTP to HTTPS. Answering at all is the point.
+  uri:
+    url: http://localhost/
+    method: GET
+    status_code: [200, 301, 302]
+    follow_redirects: none
+  register: local_http
+  until: local_http.status in [200, 301, 302]
+  retries: 30
+  delay: 10
+
+- name: Verify apache is running inside the container
+  command: docker exec alyx_apache service apache2 status
+  register: apache_status
+  changed_when: false
+  failed_when: "'apache2 is running' not in apache_status.stdout"
+
+- name: Verify Django can reach the database
+  command: docker exec alyx_apache ./manage.py showmigrations --plan
+  register: showmigrations
+  changed_when: false
+
+- name: Assert no migrations were left unapplied
+  # `manage.py migrate` ran earlier in the play; anything still marked [ ] here means it
+  # silently failed to apply, which is the exact failure mode that used to go unnoticed
+  # until something unrelated happened to run migrate.
+  assert:
+    that:
+      - showmigrations.stdout is not search('\[ \]')
+    fail_msg: >-
+      {{ inventory_hostname }} has unapplied migrations after deploy:
+      {{ showmigrations.stdout_lines | select('search', '\[ \]') | list | join(', ') }}
+    success_msg: "All migrations applied."
+
+- name: Read the apache vhost config for the OOM mitigations
+  command: docker exec alyx_apache sh -c 'cat /etc/apache2/sites-available/*.conf'
+  register: vhost_conf
+  changed_when: false
+
+- name: Assert the WSGI daemon has the OOM-mitigation limits set
+  assert:
+    that:
+      - vhost_conf.stdout is search('WSGIDaemonProcess')
+      - vhost_conf.stdout is search('request-timeout=300')
+      - vhost_conf.stdout is search('maximum-requests=1000')
+    fail_msg: >-
+      WSGIDaemonProcess on {{ inventory_hostname }} is missing request-timeout=300 and/or
+      maximum-requests=1000 -- the recycling that keeps a leaking worker from OOMing the box.
+    success_msg: "WSGI request-timeout and maximum-requests set."
+
+- name: Assert apache logs are piped through rotatelogs
+  assert:
+    that:
+      - vhost_conf.stdout is search('rotatelogs')
+    fail_msg: >-
+      ErrorLog on {{ inventory_hostname }} is not piped through rotatelogs -- apache logs
+      will grow until they fill the disk.
+    success_msg: "Log rotation active."
+
+- name: Check swap
+  command: swapon --show=NAME,SIZE --noheadings
+  register: swap_show
+  changed_when: false
+  failed_when: false
+
+- name: Assert swap is active
+  assert:
+    that:
+      - swap_show.stdout | trim | length > 0
+    fail_msg: >-
+      No swap active on {{ inventory_hostname }}. Re-run ansible_setup_alyx_server.yaml --
+      the 2G swapfile is the last line of defence against an OOM kill.
+    success_msg: "Swap active: {{ swap_show.stdout | trim }}"
+
+- name: Verify the site answers over TLS
+  # Where it runs is controlled per host by alyx_tls_check_from:
+  #   control_node  (default) run from the control node, so this covers public DNS, the
+  #                 firewall and the certificate exactly as an external client sees them.
+  #   host          run on the server itself. Still proves apache is terminating TLS with a
+  #                 valid certificate, but says nothing about external reachability. For
+  #                 hosts the control node cannot reach -- cortexlab sits behind a
+  #                 restrictive security group, opened only for certbot (CERTBOT_SG).
+  #   skip          no TLS check at all.
+  # `host` is not a guaranteed substitute: if the server's public name resolves to an
+  # Elastic IP rather than its private address, the request has to hairpin back through
+  # the gateway, which AWS does not always allow. Use skip if it fails that way.
+  uri:
+    url: "https://{{ expected_server_name }}/"
+    method: GET
+    status_code: 200
+    follow_redirects: all
+  delegate_to: "{{ 'localhost' if alyx_tls_check_from == 'control_node' else inventory_hostname }}"
+  register: public_http
+  until: public_http.status == 200
+  retries: 10
+  delay: 15
+  when:
+    - expected_server_name is defined
+    - alyx_tls_check_from != 'skip'
+
+- name: Post-deploy summary
+  debug:
+    msg:
+      - "{{ inventory_hostname }} is on alyx {{ alyx_version }}"
+      - "rollback point: {{ alyx_rollback_path | default('none -- snapshot was skipped') }}"
+      - >-
+        TLS check:
+        {%- if expected_server_name is not defined %} skipped (no expected_server_name)
+        {%- elif alyx_tls_check_from == 'skip' %} skipped by configuration
+        {%- else %} https://{{ expected_server_name }} -> {{ public_http.status }}
+        (from the {{ 'control node' if alyx_tls_check_from == 'control_node' else 'host itself' }})
+        {%- endif %}

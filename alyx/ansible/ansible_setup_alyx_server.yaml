@@ -38,12 +38,47 @@
     hostname: "{{ ansible_hostname }}"
     ip_address: "{{ ansible_default_ipv4.address }}"
     date_time: "{{ ansible_date_time.iso8601 }}"
+    iblalyx_dir: /home/ubuntu/iblalyx
+    iblalyx_branch: main
 
   tasks:
     - name: Create spacer file
       command: dd if=/dev/zero of=/home/ubuntu/spacer.bin bs=1 count=0 seek=1G
       args:
         creates: /home/ubuntu/spacer.bin
+
+    - name: Create 2GB swapfile
+      command: fallocate -l 2G /swapfile
+      args:
+        creates: /swapfile
+
+    - name: Set swapfile permissions
+      file:
+        path: /swapfile
+        mode: '0600'
+
+    - name: Format swapfile
+      command: mkswap /swapfile
+      when: ansible_swaptotal_mb == 0
+
+    - name: Enable swapfile
+      command: swapon /swapfile
+      when: ansible_swaptotal_mb == 0
+
+    - name: Persist swapfile in fstab
+      mount:
+        path: none
+        src: /swapfile
+        fstype: swap
+        opts: sw
+        state: present
+
+    - name: Set vm.swappiness for emergency-only swap use
+      sysctl:
+        name: vm.swappiness
+        value: '10'
+        state: present
+        reload: yes
 
     - name: Ensure log directory exists
       file:
@@ -71,3 +106,25 @@
       loop:
         - /home/ubuntu/uploaded
         - /home/ubuntu/tables
+
+    # Bind-mounted into the alyx_apache container at /home/iblalyx (see docker-compose.yaml).
+    # This same task handles both a first-time clone and a subsequent update to a new commit,
+    # so this playbook can be re-run safely for either case.
+    - name: Clone or update iblalyx
+      ansible.builtin.git:
+        repo: https://github.com/int-brain-lab/iblalyx.git
+        dest: "{{ iblalyx_dir }}"
+        version: "{{ iblalyx_branch }}"
+        update: yes
+      become_user: ubuntu
+      register: iblalyx_repo
+      notify: Restart alyx container
+
+  handlers:
+    # The container's own startup command re-installs iblalyx's requirements on every start,
+    # so restarting it is enough to pick up a newly pulled iblalyx commit. On a first-time
+    # install the container won't exist yet at this point, so a failure here is expected
+    # and harmless: docker compose will do the initial `pip install` when it's first brought up.
+    - name: Restart alyx container
+      command: docker restart alyx_apache
+      failed_when: false

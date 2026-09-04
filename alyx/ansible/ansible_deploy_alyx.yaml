@@ -1,0 +1,327 @@
+# Deploys/updates Alyx from the alyx-repo-sourced compose (cortex-lab/alyx deploy/app/).
+#
+# Runs from a control node (currently mbox) against the hosts in inventory.yaml. Run it
+# from this directory so ansible.cfg is picked up:
+#
+#   cd ~/Documents/PYTHON/iblsre/alyx/ansible
+#   git -C ../.. pull
+#   ansible-playbook ansible_deploy_alyx.yaml -e alyx_version=3.6.4 --limit alyx-test
+#   ansible-playbook ansible_deploy_alyx.yaml -e alyx_version=3.6.4
+#
+# Hosts are updated ONE AT A TIME in inventory order (serial: 1, order: inventory) and the
+# whole rollout aborts on the first failure (any_errors_fatal: true) -- alyx-test is listed
+# first precisely so a bad release stops there. Use --limit for a single host.
+#
+# To run it the old way, on the server itself:
+#   ansible-playbook ansible_deploy_alyx.yaml -e alyx_target=localhost -e alyx_hostname=alyx-test
+# The overlay sources are taken relative to this playbook, so that path still works from a
+# checkout on the server; only the inventory-supplied vars (expected_server_name) are lost.
+#
+# alyx_version must be a tag on cortex-lab/alyx (a release, or a `dev*` tag for a preflight
+# against a candidate build). If omitted it resolves to GitHub's current latest release --
+# resolved ONCE on the control node and reused for every host, so a release cut mid-rollout
+# can't leave the fleet split across two versions.
+#
+# Before touching anything the play takes a pg_dump rollback point (tasks/snapshot_db.yaml),
+# checks free disk for both the dump and the image pull, and asserts it is on the host it
+# thinks it is. Afterwards it runs tasks/postcheck.yaml -- the checks that were previously
+# pasted in by hand.
+#
+# Populates ~/app (NOT a git checkout -- plain files ansible manages) with:
+#   - docker-compose.yaml       fetched fresh from the alyx_version tag (source of truth)
+#   - template.env              fetched alongside it, for reference when merging .env
+#   - docker-compose.ibl.yaml   pushed from the CONTROL NODE's iblsre checkout
+#   - docker-compose.host.yaml  pushed from alyx/hosts/<alyx_hostname>/, if it exists
+# then ensures ~/app/.env's COMPOSE_FILE lists exactly the files present, so a plain
+# `docker compose up -d` in ~/app needs no `-f` flags. ~/app/.env itself is NOT managed
+# here -- it must already exist (decrypted from the sops copy in alyx/hosts/<host>/env)
+# before the first run.
+---
+# Resolving the tag has to happen in its own play, and that play must NOT be batched.
+# `run_once` fires once per BATCH, and the deploy play below runs `serial: 1` -- so each
+# host is its own batch and a run_once task there executes once per host. An earlier
+# version resolved the version inside the deploy play and was measured doing exactly that:
+# five separate GitHub queries, which a release cut mid-rollout could answer differently,
+# leaving the fleet split across two versions. With no `serial` here there is one batch
+# containing every host, so run_once genuinely means once, and the fact it sets lands on
+# all of them and persists into the play below.
+#
+# This play targets the same host pattern as the deploy play so that --limit filters both
+# identically -- targeting `localhost` here instead would be skipped entirely by any
+# --limit, leaving the version undefined.
+- name: Resolve the alyx release tag once for the whole rollout
+  hosts: "{{ alyx_target | default('alyx') }}"
+  gather_facts: no
+
+  tasks:
+    - name: Query the GitHub API for the latest release
+      uri:
+        url: https://api.github.com/repos/cortex-lab/alyx/releases/latest
+        return_content: yes
+      delegate_to: localhost
+      run_once: true
+      register: latest_release
+      when: alyx_version is not defined
+
+    - name: Pin that tag for every host in this run
+      set_fact:
+        alyx_version: "{{ latest_release.json.tag_name }}"
+      run_once: true
+      when: alyx_version is not defined
+
+    - name: Announce the release and the hosts it will reach
+      debug:
+        msg: >-
+          Rolling out alyx {{ alyx_version }}
+          ({{ 'pinned with -e' if latest_release is skipped else 'resolved as GitHub latest' }})
+          to, in order: {{ ansible_play_hosts_all | join(', ') }}
+      run_once: true
+
+- name: Deploy/update Alyx from the alyx-repo-sourced compose
+  hosts: "{{ alyx_target | default('alyx') }}"
+  serial: 1
+  order: inventory
+  any_errors_fatal: true
+  gather_facts: yes
+
+  vars:
+    # Overlay sources come from the control node's checkout, resolved relative to this
+    # playbook, so the control node is the single source of truth and the servers no
+    # longer need an iblsre clone kept current just to deploy.
+    hosts_dir: "{{ playbook_dir }}/../hosts"
+    app_dir: /home/ubuntu/app
+    backup_dir: /home/ubuntu/backups/alyx
+    alyx_raw_base: "https://raw.githubusercontent.com/cortex-lab/alyx/{{ alyx_version }}/deploy/app"
+    host_override_src: "{{ hosts_dir }}/{{ alyx_hostname }}/docker-compose.host.yaml"
+    snapshot_path: "{{ backup_dir }}/{{ alyx_hostname }}-{{ alyx_env.POSTGRES_DB }}-{{ ansible_date_time.iso8601_basic_short }}-pre-{{ alyx_version }}.dump"
+
+
+  tasks:
+    - name: Require alyx_hostname
+      assert:
+        that:
+          - alyx_hostname is defined
+        fail_msg: >-
+          alyx_hostname is not set for {{ inventory_hostname }}. It comes from
+          inventory.yaml for inventory hosts; pass -e alyx_hostname=<host> when running
+          with -e alyx_target=localhost.
+
+    - name: Announce what is about to be deployed where
+      debug:
+        msg: "Deploying alyx {{ alyx_version }} to {{ inventory_hostname }} (overlay: {{ alyx_hostname }})"
+
+    - name: Confirm this host's overlay directory exists in the control node's checkout
+      stat:
+        path: "{{ hosts_dir }}/{{ alyx_hostname }}"
+      delegate_to: localhost
+      register: hosts_dir_stat
+
+    - name: Assert the overlay directory is present
+      assert:
+        that: hosts_dir_stat.stat.isdir | default(false)
+        fail_msg: >-
+          No directory {{ hosts_dir }}/{{ alyx_hostname }} on the control node. Either
+          alyx_hostname is wrong, or this checkout is stale -- git pull the iblsre repo.
+
+    # ---- identity + preflight, all before anything is modified ----------------------
+
+    - name: Fail fast if ~/app/.env is missing
+      stat:
+        path: "{{ app_dir }}/.env"
+      register: env_file
+
+    - name: Assert .env is present
+      assert:
+        that: env_file.stat.exists
+        fail_msg: >-
+          {{ app_dir }}/.env is missing on {{ inventory_hostname }}. Decrypt this server's
+          env from alyx/hosts/{{ alyx_hostname }}/env (sops -d) and place it there before
+          deploying.
+
+    - name: Read this host's identity and database settings from ~/app/.env
+      # Only these keys -- the file also holds DJANGO_SECRET_KEY and AWS credentials, which
+      # have no business being read into ansible's memory or its log.
+      shell: |
+        set -euo pipefail
+        grep -E '^(APACHE_SERVER_NAME|POSTGRES_HOST|POSTGRES_PORT|POSTGRES_USER|POSTGRES_DB)=' {{ app_dir }}/.env
+      args:
+        executable: /bin/bash
+      register: env_kv
+      changed_when: false
+
+    - name: Parse them
+      set_fact:
+        alyx_env: >-
+          {{ alyx_env | default({}) | combine({
+               (item.split('=', 1)[0]):
+               (item.split('=', 1)[1] | trim | regex_replace('^[\"\x27]|[\"\x27]$', ''))
+             }) }}
+      loop: "{{ env_kv.stdout_lines }}"
+
+    - name: Assert we are on the host we think we are
+      # The ssh alias, the alyx/hosts/ directory name and the served domain are three
+      # different strings for several hosts (alyx-cortexlab/cortexlab/alyx.cortexlab.net),
+      # so a wrong --limit or a wrong alyx_hostname is easy to get and, without this,
+      # silent: it would copy another host's overlay over this one's ~/app.
+      assert:
+        that:
+          - alyx_env.APACHE_SERVER_NAME == expected_server_name
+        fail_msg: >-
+          IDENTITY MISMATCH -- refusing to deploy. Inventory says {{ inventory_hostname }}
+          (overlay {{ alyx_hostname }}) should serve {{ expected_server_name }}, but
+          {{ app_dir }}/.env on the box connected to says
+          {{ alyx_env.APACHE_SERVER_NAME }}.
+        success_msg: "Confirmed {{ inventory_hostname }} serves {{ alyx_env.APACHE_SERVER_NAME }}."
+      when: expected_server_name is defined
+
+    - name: Take a pre-deploy database snapshot
+      include_tasks: tasks/snapshot_db.yaml
+      when: alyx_snapshot | bool
+
+    # Deliberately AFTER the snapshot and AFTER the prune. The snapshot step itself consumes
+    # disk -- it pulls postgres:17 (~450 MB) on RDS hosts and writes the dump -- so checking
+    # before it measured space that was then eaten, and the pull would fail a check that had
+    # just passed. Pruning first means the check reflects what is genuinely available.
+    - name: Clear dangling images to make room for the pull
+      command: docker image prune -f
+      changed_when: false
+
+    - name: Check free space on the docker data root
+      # The prune above only reclaims untagged layers. This catches the case the docs used to
+      # handle by a human noticing `docker compose pull` fail -- which in a fan-out run nobody
+      # is watching for.
+      shell: |
+        set -euo pipefail
+        df --output=avail -B1 "$(docker info --format '{% raw %}{{.DockerRootDir}}{% endraw %}')" | tail -1
+      args:
+        executable: /bin/bash
+      register: docker_avail_raw
+      changed_when: false
+
+    - name: Assert there is room for the image pull
+      assert:
+        that:
+          - (docker_avail_raw.stdout | trim | int) >= (alyx_min_free_pull_gb | int) * 1073741824
+        fail_msg: >-
+          Only {{ (docker_avail_raw.stdout | trim | int / 1073741824) | round(2) }} GB free
+          on the docker data root of {{ inventory_hostname }};
+          {{ alyx_min_free_pull_gb }} GB required for the pull. Reclaim space, then re-run.
+          Note that `docker system prune --all --force` only helps if images are actually
+          unreferenced -- check `docker system df` first, since on these hosts the running
+          images are usually all in use and it reclaims nothing. The running service has NOT
+          been touched; only the pre-deploy dump was written.
+        success_msg: >-
+          {{ (docker_avail_raw.stdout | trim | int / 1073741824) | round(2) }} GB free for the pull.
+
+    # ---- from here on the host is being modified ------------------------------------
+
+    - name: Ensure ~/app exists
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Fetch the release's base compose + template.env from the alyx repo
+      get_url:
+        url: "{{ alyx_raw_base }}/{{ item }}"
+        dest: "{{ app_dir }}/{{ item }}"
+        mode: '0644'
+        force: yes
+      loop:
+        - docker-compose.yaml
+        - template.env
+
+    - name: Push the IBL-wide overlay from the control node's checkout
+      copy:
+        src: "{{ hosts_dir }}/docker-compose.ibl.yaml"
+        dest: "{{ app_dir }}/docker-compose.ibl.yaml"
+        mode: '0644'
+      when: alyx_apply_ibl_overlay | bool
+
+    - name: Remove the IBL-wide overlay if this host does not use it
+      # Keeps ~/app deterministic: a host with the overlay disabled must not be left with
+      # a stale copy that a hand-edited COMPOSE_FILE could later pick up.
+      file:
+        path: "{{ app_dir }}/docker-compose.ibl.yaml"
+        state: absent
+      when: not (alyx_apply_ibl_overlay | bool)
+
+    - name: Check whether this host has a host-specific override
+      stat:
+        path: "{{ host_override_src }}"
+      delegate_to: localhost
+      register: host_override
+
+    - name: Push the host-specific override, if this host has one
+      copy:
+        src: "{{ host_override_src }}"
+        dest: "{{ app_dir }}/docker-compose.host.yaml"
+        mode: '0644'
+      when: host_override.stat.exists
+
+    - name: Remove a stale host override if this host no longer has one
+      file:
+        path: "{{ app_dir }}/docker-compose.host.yaml"
+        state: absent
+      when: not host_override.stat.exists
+
+    - name: Compute the COMPOSE_FILE list for this host
+      set_fact:
+        compose_files: >-
+          {{ (['docker-compose.yaml']
+              + (['docker-compose.ibl.yaml'] if alyx_apply_ibl_overlay | bool else [])
+              + (['docker-compose.host.yaml'] if host_override.stat.exists else [])) }}
+
+    - name: Ensure COMPOSE_FILE in .env matches the files actually present
+      lineinfile:
+        path: "{{ app_dir }}/.env"
+        regexp: '^COMPOSE_FILE='
+        line: "COMPOSE_FILE={{ compose_files | join(':') }}"
+
+    - name: Pull the new image
+      command: docker compose pull
+      args:
+        chdir: "{{ app_dir }}"
+
+    - name: Recreate containers that changed
+      command: docker compose up -d --remove-orphans
+      args:
+        chdir: "{{ app_dir }}"
+
+    # The image/container update above never touches the database on its own -- nothing in
+    # the compose command or this playbook ran `migrate` before this task existed. A schema
+    # change would then silently sit unapplied until something else happened to run it (e.g.
+    # alyx-test's unrelated nightly cache-reset cron), which isn't true on every host. Retry
+    # briefly since postgres may not have finished accepting connections yet right after
+    # `up -d`.
+    - name: Apply database migrations
+      command: docker exec alyx_apache python manage.py migrate --noinput
+      register: migrate_result
+      changed_when: "'No migrations to apply' not in migrate_result.stdout"
+      until: migrate_result.rc == 0
+      retries: 5
+      delay: 5
+
+    - name: Run the post-deploy checks
+      include_tasks: tasks/postcheck.yaml
+
+    # ---- only once this host is verified good ---------------------------------------
+
+    - name: List existing rollback points for this host
+      find:
+        paths: "{{ backup_dir }}"
+        patterns: "{{ alyx_hostname }}-*.dump"
+      register: snapshots
+      when: alyx_snapshot | bool
+
+    - name: Prune all but the newest rollback points
+      # Deliberately after the post-checks: a run that failed anywhere above never reaches
+      # this, so a broken deploy can never delete the dump that would undo it.
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: >-
+        {{ (snapshots.files | default([]) | sort(attribute='mtime', reverse=true))[alyx_snapshot_keep | int:] }}
+      loop_control:
+        label: "{{ item.path }}"
+      when: alyx_snapshot | bool

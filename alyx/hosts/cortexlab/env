@@ -1,0 +1,17 @@
+{
+	"data": "ENC[AES256_GCM,data:1rrx7Dst+qIUZAy/VOhE8vsm7BEKxU7wB6xM9wmvbzr5AnmBHV1q2zYg9pCRQz0U+peyamh/+DA+ee25dxzZpLwXBbPQ0DwZ6iJ47IMPPbLnI4ouoAeHmE1CyioRe1q15TeeZ0H3AlZetZbXnvPiGkkywywmgYUqUbjrzQmnVbH+PW7A9hJKkW2rE35ZafUWnP9YHghoKQkDBJZhkVeds5tHXNNrEjTWx8CHiCR83Yj8zR+RwkbQtOwuBYu97eMD5XJWnDd16Uv3/cMu2OWrehQQwGnACr0ui86daYMFb7jbyAAQE5SYOm7o7sD8RJym8RVIuY1AHLnwXd5VKE+c/ZkdIE6PUr2eKlPg7JosbejMRgkXVhGeU5XDiiBX1fEIaubcIXXdhjo90BGEwstlAW2gp/XsOkjc7LLIvTJ4dp9rd9MK8OWcMOXgGtv1MEfIgklQr8zbImVmMIqmcAab5uq3P4Io2pStNFCOiHrnlMpCpaFurhQ2BpmwU3ue10Hcq33FpmX6LfKW0QJkOIDeai22+rIOzwJVf4YtAGDRgCB3ML1MdOA2uD6Y8Kx/tiLSPlE6G6uu4ZqFsuDdyYPNW9xZGHTxsLLnwiaQcxZG9FY/aMcTG3zIgPCm8SJ+hDQhLqoOlQ09Wckr8YjY047W4+2ebSayCKiCltFw4HZ7hJ1I5P1G2mZRN8EZT4heTxNrzlLugQt+bmxn3xSA4RRFP1p+9tAu4XAdt7B/JzEs+YcUEuqA+tfYHpjvW3NMzI00Gb6m7i94ApV42JOSmTThzIC85JDpsJRIdnf+ZQO0FdAP2hIIY3zr4rCg2o0NtUnlpamZZWEz1TVEQS8YZCr4/nemw7I4zqEwzMaMapXBKcjuYJ4sKUFREaUc2kxFEIlaqSlekFC+RbuQsAhzvDc+PUpeYYRPGwh0jkXL+Non7qHIuBQn+yLmJX55qxzhBH0kGrZodl49y5BGtFA3gu9CiHvN9Sl2r3cqgJzOu9N/bh525N4hV4bcqHgJBS7Fir3vZEHhRBlaH27STsjf8z0PBd0/WDORyE29NFcHxajEHyxuuxMia5y+s8D8tMWVYD4ybxbLabrQNEe6PCi86rs+FDWfJd8SvESyApLjNk/f8WwtAKTouMOKTGIc4KN2a8elwOxrLLUfgeVLUZusCA+t3rRbnoU+D58VZO4wx0fG1PNfHVihtpgYuo7IqRpDpuq6QA4C,iv:+NYq7SqNjDBf4s8O2BRDE2mVsXN8x6QXj6RY2PbdQgQ=,tag:qOzmLqvmuMkNP/Ot1GX+cA==,type:str]",
+	"sops": {
+		"kms": [
+			{
+				"arn": "arn:aws:kms:eu-west-2:537761737250:key/cfed3daf-e447-4bd4-b43c-af1347b5aa02",
+				"created_at": "2025-12-16T12:39:55Z",
+				"enc": "AQICAHi3TDW10Xdifar2WWLTjWfAfb/W+Qz2dtnR4igE6cLfNgEAdCKrS5X3SnWQbTOouxl9AAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMtYeF00LNG1aAq+4cAgEQgDsCWcLmBi105rC2lgFAEj8Q90UbZI0oJGUVdfxdsGezpmskulrnZCZzhsH1ynTxXHWwDsCHNvS/vHBS9Q==",
+				"aws_profile": ""
+			}
+		],
+		"lastmodified": "2026-07-24T22:32:37Z",
+		"mac": "ENC[AES256_GCM,data:N2F+L2hIjx2W2qIaiFCuFHb5SCMMv7RNjneIdyAeLCnDZJFjpGqdFtqH+H2RzSq9zceXaok+zbrADGDww1pKPJYbyPpwOmFcRMbKxXSsAPOPTq/ymeojEHUZGMWCOC7HOFmYfhUh1W4NVIUl1XTHgkGnKi8GdkOesi0sCacbIMg=,iv:nHVosBL/94baz5HHR800s/HEt83oYbJkGm2k+LWalwk=,tag:PFnEX1VYQdFpwrh+ashMpw==,type:str]",
+		"unencrypted_suffix": "_unencrypted",
+		"version": "3.11.0"
+	}
+}

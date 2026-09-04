@@ -1,0 +1,88 @@
+---
+# Cazettes-specific supplement — run AFTER ansible_setup_alyx_server.yaml.
+# Handles only what differs from the standard install: Cloudflare certbot + cert mount.
+#
+# Required vars:
+#   cloudflare_api_token   Cloudflare "Edit zone DNS" token scoped to iblcore.org
+#
+# Usage:
+#   ansible-playbook cazettes_setup.yaml \
+#     -i localhost, --connection=local \
+#     --extra-vars "cloudflare_api_token=<token>"
+
+- name: Cazettes — certbot Cloudflare cert
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    domain: cazettes.iblcore.org
+    certbot_creds: /etc/letsencrypt/cloudflare.ini
+    deploy_dir: /home/ubuntu/Documents/PYTHON/iblsre/alyx/containers/deploy-web
+
+  tasks:
+
+    - name: Install certbot and Cloudflare DNS plugin
+      apt:
+        name:
+          - certbot
+          - python3-certbot-dns-cloudflare
+        state: present
+        update_cache: yes
+
+    - name: Write Cloudflare credentials file
+      copy:
+        dest: "{{ certbot_creds }}"
+        content: "dns_cloudflare_api_token = {{ cloudflare_api_token }}\n"
+        owner: root
+        group: root
+        mode: '0600'
+
+    - name: Issue Let's Encrypt certificate via Cloudflare DNS challenge
+      command: >
+        certbot certonly
+          --dns-cloudflare
+          --dns-cloudflare-credentials {{ certbot_creds }}
+          -d {{ domain }}
+          --email admin@internationalbrainlab.org
+          --agree-tos --no-eff-email --non-interactive
+      args:
+        creates: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
+
+    - name: Set Let's Encrypt directory permissions for Docker
+      file:
+        path: "{{ item }}"
+        mode: '0755'
+      loop:
+        - /etc/letsencrypt/live
+        - /etc/letsencrypt/archive
+
+    - name: Ensure renewal-hooks deploy directory exists
+      file:
+        path: /etc/letsencrypt/renewal-hooks/deploy
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Write certbot renewal hook
+      copy:
+        dest: /etc/letsencrypt/renewal-hooks/deploy/restart-alyx.sh
+        content: |
+          #!/bin/bash
+          docker restart alyx_apache
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Write docker-compose.override.yaml to mount host certs into container
+      copy:
+        dest: "{{ deploy_dir }}/docker-compose.override.yaml"
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+        content: |
+          services:
+            alyx_apache:
+              volumes:
+                - /etc/letsencrypt:/etc/letsencrypt:ro
