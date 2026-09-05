@@ -1,7 +1,13 @@
 FROM internationalbrainlab/ibllib:nextflow
 
-# extra install
-RUN uv pip install --python $VIRTUAL_ENV ibl-photometry
+# install ibl-photometry, either from pypi or, if a branch is given, from git
+# set the branch with build.sh <branch>, or docker build --build-arg IBLPHOTOMETRY_BRANCH=<branch> ...
+ARG IBLPHOTOMETRY_BRANCH=
+RUN if [ -z "${IBLPHOTOMETRY_BRANCH}" ]; then \
+    uv pip install --python $VIRTUAL_ENV ibl-photometry; \
+    else \
+    uv pip install --python $VIRTUAL_ENV "git+https://github.com/int-brain-lab/ibl-photometry.git@${IBLPHOTOMETRY_BRANCH}"; \
+    fi
 
 # make sure all files are owned by user ubuntu
 # note - this can probably be solved by better user:group settings inside the container

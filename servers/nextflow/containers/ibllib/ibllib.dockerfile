@@ -24,11 +24,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 RUN uv venv $VIRTUAL_ENV && \
     uv pip install --python $VIRTUAL_ENV ipython debugpy
 
-# install via git, with specified branch
-# override at build time with: docker build --build-arg IBLLIB_BRANCH=<branch> ...
-# (build.sh takes it from the DOCKER_IBLLIB_BRANCH environment variable)
-ARG IBLLIB_BRANCH=develop
-RUN uv pip install --python $VIRTUAL_ENV "git+https://github.com/int-brain-lab/ibllib.git@${IBLLIB_BRANCH}"
+# install ibllib, either from pypi or, if a branch is given, from git
+# set the branch with build.sh <branch>, or docker build --build-arg IBLLIB_BRANCH=<branch> ...
+ARG IBLLIB_BRANCH=
+RUN if [ -z "${IBLLIB_BRANCH}" ]; then \
+    uv pip install --python $VIRTUAL_ENV ibllib; \
+    else \
+    uv pip install --python $VIRTUAL_ENV "git+https://github.com/int-brain-lab/ibllib.git@${IBLLIB_BRANCH}"; \
+    fi
 
 # the vscode debug functionality needs compatible versions between your local vscode install
 # and the vscode-server installed in the docker image
