@@ -15,6 +15,3 @@ fi
 docker build -t internationalbrainlab/ibllib:nextflow \
     --build-arg IBLLIB_BRANCH="${IBLLIB_BRANCH}" \
     -f ibllib.dockerfile .
-
-# and push
-docker push internationalbrainlab/ibllib:nextflow

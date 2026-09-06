@@ -16,6 +16,3 @@ fi
 docker build -t internationalbrainlab/iblphotometry:nextflow \
     --build-arg IBLPHOTOMETRY_BRANCH="${IBLPHOTOMETRY_BRANCH}" \
     -f iblphotometry.dockerfile .
-
-# and push
-docker push internationalbrainlab/iblphotometry:nextflow
