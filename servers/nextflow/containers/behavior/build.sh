@@ -5,6 +5,3 @@
 # build the container
 docker build -t internationalbrainlab/behavior:nextflow \
     -f behavior.dockerfile .
-
-# and push
-docker push internationalbrainlab/behavior:nextflow

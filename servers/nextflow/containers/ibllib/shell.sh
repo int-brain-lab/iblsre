@@ -19,7 +19,7 @@ docker run \
     $USER_GROUP \
     $DATA_MOUNT \
     $ONE_CONFIG_MOUNT \
-    ibllib:nextflow /bin/bash
+    internationalbrainlab/ibllib:nextflow /bin/bash
 
 
  
