@@ -19,7 +19,7 @@ docker run \
     $USER_GROUP \
     $DATA_MOUNT \
     $ONE_CONFIG_MOUNT \
-    iblphotometry:nextflow /bin/bash
+    internationalbrainlab/iblphotometry:nextflow /bin/bash
 
 
  
