@@ -36,7 +36,7 @@ RUN if [ -z "${IBLLIB_BRANCH}" ]; then \
 # the vscode debug functionality needs compatible versions between your local vscode install
 # and the vscode-server installed in the docker image
 # set the VSCode commit hash here (get it from Help → About in VSCode)
-ARG VSCODE_COMMIT=e4c7e7b1d6d060162f4aa7f8225271b67ce1df75
+ARG VSCODE_COMMIT=a44adf7f53e00964ab890f9f8758a334f1fc15bc
 
 # Install VSCode server and extensions
 RUN curl -fsSL "https://update.code.visualstudio.com/commit:${VSCODE_COMMIT}/server-linux-x64/stable" \
