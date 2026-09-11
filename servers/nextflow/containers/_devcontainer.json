@@ -1,9 +1,11 @@
 {
-    "name": "iblphotometry",
-    "image": "iblphotometry:nextflow",
+    "name": "behavior",
+    "image": "internationalbrainlab/photometry:nextflow",
     "remoteUser": "ubuntu",
+    "workspaceFolder": "/home/ubuntu",
     "mounts": [
-        "source=/mnt/s0,target=/mnt/s0,type=bind"
+        "source=/mnt/s0,target=/mnt/s0,type=bind",
+        "source=${localEnv:HOME}/.one,target=/home/ubuntu/.one,type=bind"
     ],
     "customizations": {
         "vscode": {

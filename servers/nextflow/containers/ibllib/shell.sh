@@ -1,7 +1,4 @@
-# run the container mounting the .one directory for correct auth
-# docker run -it -u $(id -u):$(id -g) -v /mnt/s0/:/mnt/s0 iblphotometry:latest $1
-
-# note the priviledged flag is only necessary on my local machine as I am mounting via sshfs
+#!/usr/bin/env bash
 
 # takes care of the files being owned by root:root issue
 USER_GROUP="-u $(id -u):$(id -g)"
@@ -10,7 +7,6 @@ USER_GROUP="-u $(id -u):$(id -g)"
 DATA_MOUNT="-v /mnt/s0/:/mnt/s0"
 
 # for taking care of the one authentification
-# potential pitfall here: cache folder might not be mounted
 ONE_CONFIG_MOUNT="-v /home/$USER/.one:/home/ubuntu/.one"
 
 docker run \
