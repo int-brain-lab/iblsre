@@ -53,13 +53,3 @@ RUN /home/ubuntu/.vscode-server/bin/${VSCODE_COMMIT}/bin/code-server \
 
 # port for debugging
 EXPOSE 5678
-
-# alyx credentials - multiple options
-# simply moves over the current .one folder and all it's contents into the docker container
-# COPY /home/$USER/.one /home/ubuntu/.one/
-
-# alternatively, those are first copied, allows local modification
-# COPY one_config /home/ubuntu/.one/
-
-# or, can be specified as mount in docker run
-# see shell.sh

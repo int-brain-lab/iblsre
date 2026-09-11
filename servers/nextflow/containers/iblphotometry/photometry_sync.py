@@ -1,35 +1,37 @@
+import logging
 import sys
 from pathlib import Path
-from ibllib.pipes.dynamic_pipeline import get_photometry_tasks
+
 import ibllib.io.session_params as sess_params
+from ibllib.pipes.dynamic_pipeline import get_photometry_tasks
 from ibllib.pipes.tasks import Pipeline, run_alyx_task
+from iblutil.util import setup_logger
 from one.api import ONE
+
+# logs to stdout, with the same format and colors as the ibllib logs
+_logger = setup_logger(name="photometry_sync", level=logging.INFO)
 
 LOCATION = "server"
 DRY = False
-REGISTER_DATASETS = False
-
-# TODO implement proper logging
-if len(sys.argv) == 1:
-    # DEBUGGING
-    session_path = Path("/mnt/s0/georg/Data/Subjects/ZFM-09140/2025-08-26/001")
-else:
-    session_path = Path(sys.argv[1])
+session_path = Path(sys.argv[1])
 
 one = ONE(cache_rest=None)
 experiment_description = sess_params.read_params(session_path)
 eid = one.path2eid(session_path)
 lab = one.alyx.rest("sessions", "read", eid)["lab"]
+_logger.info("photometry sync on session %s (eid: %s, lab: %s)", session_path, eid, lab)
 
 # the run_alyx_task approach - this keeps full compatibility with alyx
-# should handle everything - but doesn't play nice with the debugger
 tasks = get_photometry_tasks(experiment_description, session_path=session_path, one=one)
+_logger.info("photometry tasks for this session: %s", ", ".join(tasks))
 pipeline = Pipeline(session_path=session_path, one=one)
 pipeline.tasks = tasks
-task_dicts = pipeline.create_alyx_tasks(rerun__status__in="__all__")
-assert len(task_dicts) == 1, "more than one sync task found"
-task_dict = task_dicts[0]
-if not DRY:
+(task_dict,) = pipeline.create_alyx_tasks(rerun__status__in="__all__")
+
+if DRY:
+    _logger.info("dry run, not running task %s on session %s", task_dict["name"], session_path)
+else:
+    _logger.info("running task %s (id: %s) on session %s", task_dict["name"], task_dict["id"], session_path)
     task, registered_datasets = run_alyx_task(
         one=one,
         session_path=session_path,
@@ -37,31 +39,10 @@ if not DRY:
         location=LOCATION,
         mode="raise",
     )
-
-# this works with the debugger
-# assert len(tasks) == 1
-# task = list(tasks.values())[0]
-# task.setUp()
-# if not DRY:
-#     task._run()
-
-#     # update task log
-#     log = ""
-#     one.alyx.rest("tasks", "partial_update", task_dict["id"], data={"log": log})
-
-#     # update task status
-#     status = "Complete"
-#     one.alyx.rest("tasks", "partial_update", task_dict["id"], data={"status": status})
-
-#     # register datasets
-#     if REGISTER_DATASETS:
-#         registered_dsets = task.register_datasets(
-#             location=LOCATION,
-#             labs=one.alyx.rest("sessions", "read", eid)["lab"],
-#         )
-
-# deal with return code
-# if task.status == 0:
-#     sys.exit(0)
-# else:
-#     sys.exit(1)
+    _logger.info(
+        "task %s on session %s finished with status %s, %i datasets registered",
+        task["name"],
+        session_path,
+        task["status"],
+        len(registered_datasets or []),
+    )

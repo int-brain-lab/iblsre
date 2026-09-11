@@ -19,4 +19,4 @@ COPY photometry_sync.py /home/ubuntu/photometry_sync.py
 
 # make all python files owned by ubuntu user
 # (for debugging inside a container)
-RUN chown  ubuntu:ubuntu /home/ubuntu/*.py
+RUN chown ubuntu:ubuntu /home/ubuntu/*.py
