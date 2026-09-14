@@ -148,11 +148,16 @@ echo "==> Installing launch.json at /home/ubuntu/.vscode/launch.json inside cont
 docker exec -u 0 "$CONTAINER_NAME" mkdir -p "/home/ubuntu/.vscode"
 docker cp "$TMP_LAUNCH" "$CONTAINER_NAME:/home/ubuntu/.vscode/launch.json"
 
-# debugpy asks python for its site dirs, ubuntus python answers with a dist-packages path that
-# the uv created venv does not have - asking the interpreter itself keeps this version agnostic
-echo "==> Creating the site dir debugpy expects inside the container"
-docker exec -u 0 "$CONTAINER_NAME" sh -c \
-    'mkdir -p $(/home/ubuntu/.venv/bin/python -c "import sysconfig; print(sysconfig.get_path(\"purelib\"))")'
+# pydevd walks site.getsitepackages() and calls realpath(strict=True) on every entry; ubuntus
+# patched site.py adds three dist-packages dirs there that uvs venv never creates, so it raises
+# FileNotFoundError before the debug session starts - asking the interpreter for its own list
+# keeps this agnostic to the python version in the image
+echo "==> Creating the site dirs debugpy expects inside the container"
+docker exec -u 0 "$CONTAINER_NAME" /home/ubuntu/.venv/bin/python -c \
+'import os, site, sysconfig
+for site_dir in dict.fromkeys(site.getsitepackages() + [sysconfig.get_path("purelib")]):
+    os.makedirs(site_dir, exist_ok=True)
+    print("   ", site_dir)'
 
 echo
 echo "==> Container '$CONTAINER_NAME' is up. To enter a shell inside:"
