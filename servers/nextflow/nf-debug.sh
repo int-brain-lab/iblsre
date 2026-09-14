@@ -114,9 +114,12 @@ else
 fi
 echo
 
+# nextflow emits either '<image> /bin/bash -ue .command.sh' or, when tracing is on,
+# '<image> /bin/bash <workdir>/.command.run nxf_trace' - drop whichever trailing command is
+# there, otherwise the container runs the task and exits instead of idling
 MODIFIED=$(echo "$DOCKER_LINE" \
     | sed 's|^docker run -i |docker run -dit |' \
-    | sed 's| /bin/bash -ue [^ ]*$||' \
+    | sed 's| /bin/bash .*$||' \
     | sed "s| --name [^ ]*| --name $CONTAINER_NAME -p $DEBUG_PORT:$DEBUG_PORT$SSH_MOUNT_FLAGS|")
 MODIFIED="$MODIFIED sleep infinity"
 
@@ -129,6 +132,14 @@ echo "==> Launching:"
 echo "    $MODIFIED"
 echo
 eval "$MODIFIED"
+
+# a container that exits right away means the trailing task command was not stripped
+if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
+    echo "Error: container '$CONTAINER_NAME' is not running - it exited immediately." >&2
+    echo "Logs:" >&2
+    docker logs "$CONTAINER_NAME" >&2 || true
+    exit 1
+fi
 
 # ------------------------------------------------------------
 # 3. Copy launch.json into the container (root, to avoid perm issues)
