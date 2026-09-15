@@ -93,6 +93,9 @@
     backup_dir: /home/ubuntu/backups/alyx
     alyx_raw_base: "https://raw.githubusercontent.com/cortex-lab/alyx/{{ alyx_version }}/deploy/app"
     host_override_src: "{{ hosts_dir }}/{{ alyx_hostname }}/docker-compose.host.yaml"
+    scripts_dir: "{{ app_dir }}/scripts"
+    scripts_shared_src: "{{ playbook_dir }}/../scripts"
+    scripts_host_src: "{{ hosts_dir }}/{{ alyx_hostname }}/scripts"
     snapshot_path: "{{ backup_dir }}/{{ alyx_hostname }}-{{ alyx_env.POSTGRES_DB }}-{{ ansible_date_time.iso8601_basic_short }}-pre-{{ alyx_version }}.dump"
 
 
@@ -246,6 +249,74 @@
         state: absent
       when: not (alyx_apply_ibl_overlay | bool)
 
+    - name: Push the always-applied scripts overlay from the control node's checkout
+      # Unconditional, unlike the IBL overlay: see docker-compose.scripts.yaml for why an
+      # operational mount must not be switchable per host.
+      copy:
+        src: "{{ hosts_dir }}/docker-compose.scripts.yaml"
+        dest: "{{ app_dir }}/docker-compose.scripts.yaml"
+        mode: '0644'
+
+    - name: Ensure the cron log directory exists and is writable by ubuntu
+      # Crontabs are installed as ubuntu, not root -- nothing they run needs root, since
+      # `docker exec` only needs docker group membership and certbot runs as root inside the
+      # container anyway. But ubuntu cannot write to /var/log (root:syslog) or to
+      # /var/log/apache2 (www-data:www-data), so cron output has nowhere to go without this.
+      # It was ubuntu-owned on alyx-test but root-owned on alyx-prod and openalyx, whose
+      # crontabs were consequently still installed under root.
+      file:
+        path: /var/log/alyx
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+      become: true
+
+    - name: Ensure the scripts directory exists
+      file:
+        path: "{{ scripts_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Check whether this host has its own scripts
+      stat:
+        path: "{{ scripts_host_src }}"
+      delegate_to: localhost
+      register: scripts_host_dir
+
+    - name: Collect the scripts this host should have
+      find:
+        paths: "{{ [scripts_shared_src] + ([scripts_host_src] if scripts_host_dir.stat.isdir | default(false) else []) }}"
+        patterns: '*.sh'
+      delegate_to: localhost
+      register: scripts_src
+
+    - name: Push the deployment scripts
+      copy:
+        src: "{{ item.path }}"
+        dest: "{{ scripts_dir }}/{{ item.path | basename }}"
+        mode: '0755'
+      loop: "{{ scripts_src.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+
+    - name: List the scripts currently on the host
+      find:
+        paths: "{{ scripts_dir }}"
+        patterns: '*.sh'
+      register: scripts_dest
+
+    - name: Remove scripts that are no longer in the repo
+      # Keeps ~/app/scripts an exact mirror of the repo. Without this a script deleted or
+      # renamed upstream would linger on the host and keep running from cron.
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ scripts_dest.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+      when: (item.path | basename) not in (scripts_src.files | map(attribute='path') | map('basename') | list)
+
     - name: Check whether this host has a host-specific override
       stat:
         path: "{{ host_override_src }}"
@@ -270,6 +341,7 @@
         compose_files: >-
           {{ (['docker-compose.yaml']
               + (['docker-compose.ibl.yaml'] if alyx_apply_ibl_overlay | bool else [])
+              + ['docker-compose.scripts.yaml']
               + (['docker-compose.host.yaml'] if host_override.stat.exists else [])) }}
 
     - name: Ensure COMPOSE_FILE in .env matches the files actually present

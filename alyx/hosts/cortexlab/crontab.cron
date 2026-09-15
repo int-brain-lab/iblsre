@@ -1,0 +1,32 @@
+# cortexlab crontab. Install with:  crontab ~/app/scripts/../../<this file>  -- see the docs;
+# in practice: crontab ~/Documents/PYTHON/iblsre/alyx/hosts/cortexlab/crontab.cron
+#
+# Scripts are synced to ~/app/scripts/ by ansible_deploy_alyx.yaml (shared alyx/scripts/ plus
+# this host's alyx/hosts/cortexlab/scripts/), and that same directory is mounted read-only
+# into the container at /home/scripts by docker-compose.scripts.yaml. So:
+#   host-side script      -> /home/ubuntu/app/scripts/<name>
+#   in-container script   -> docker exec alyx_apache ... /home/scripts/<name>
+
+# Water-restriction and notification emails (in-container: runs alyx management commands)
+0 22 * * 1-5 docker exec alyx_apache /bin/bash /home/scripts/email.sh >> /var/log/alyx/alyx_emails.log 2>&1
+
+# Prune old task records (in-container)
+30 3 * * 5 docker exec alyx_apache /bin/bash /home/scripts/cleanup_old_tasks.sh > /var/log/alyx/cleanup_old_tasks.log 2>&1
+
+# Certificate renewal. cortexlab sits behind a restrictive security group, so certbot needs
+# pre/post hooks to open port 80 for the ACME challenge.
+#
+# The hook resolves at runtime rather than being hard-coded: ec2_modify_groups.sh now ships
+# in the alyx image at /usr/local/bin (alyx > 3.6.4), but older images do not have it and
+# expect it bind-mounted at /home/iblalyx/crons/. `command -v` picks the image copy when it
+# exists and falls back otherwise, so this line is correct both before and after that release
+# and needs no second edit at cutover. Once every host runs an image that ships the script,
+# drop the fallback and the /home/iblalyx mount in docker-compose.host.yaml.
+30 1 1,15 * * docker exec alyx_apache bash -c 'HOOK=$(command -v ec2_modify_groups.sh || echo /home/iblalyx/crons/ec2_modify_groups.sh); certbot renew --pre-hook "$HOOK --add" --post-hook "$HOOK --remove && apachectl graceful" 2>&1 | tee /var/log/apache2/cert_renew.log'
+# 30 1 1,15 * * docker exec alyx_apache bash -c "certbot renew --pre-hook '/usr/local/bin/ec2_modify_groups.sh --add' --post-hook '/usr/local/bin/ec2_modify_groups.sh --remove && apachectl graceful' 2>&1 | tee /var/log/apache2/cert_renew.log"
+
+# Database backup to S3 (host-side; needs the host's AWS instance role)
+15 0 * * * /bin/bash -o pipefail -c '/bin/bash /home/ubuntu/app/scripts/backup.sh 2>&1 | tee /var/log/alyx/alyx_backup.log' && curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/bae5666b-fcfc-4d70-a702-8a0d6e21d1fc
+
+# Health check every 5 minutes
+*/5 * * * * curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/787ec4cb-2b7f-415c-9c35-8ed74df93231

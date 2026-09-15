@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
-# Load environment variables from .env if available
-if [ -f "$(dirname "$0")/../app/.env" ]; then
-    source "$(dirname "$0")/../app/.env"
+# Load environment variables from the deployment .env if available. This script is synced
+# to ~/app/scripts/ by ansible_deploy_alyx.yaml, so ../.env is ~/app/.env. It previously read
+# ../app/.env relative to its old home in the iblsre checkout, which resolved to a path that
+# never existed -- the source silently did nothing and the defaults below were always used.
+if [ -f "$(dirname "$0")/../.env" ]; then
+    source "$(dirname "$0")/../.env"
 fi
 # Set default values for uploaded folders paths
 DJANGO_MEDIA_ROOT=${DJANGO_MEDIA_ROOT:-/home/ubuntu/uploaded}

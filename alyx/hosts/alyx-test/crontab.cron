@@ -1,5 +1,11 @@
-# every dat at 23:15
-15 23 * * * ~/Documents/PYTHON/iblsre/alyx/hosts/alyx-test/00_rebuild_from_cache.sh > /var/log/alyx/00_rebuild_from_cache.log
+# alyx-test crontab. Scripts are synced to ~/app/scripts/ by ansible_deploy_alyx.yaml
+# (shared alyx/scripts/ plus this host's alyx/hosts/alyx-test/scripts/); that directory is also
+# mounted read-only into the container at /home/scripts by docker-compose.scripts.yaml.
+#   host-side script    -> /home/ubuntu/app/scripts/<name>
+#   in-container script -> docker exec alyx_apache ... /home/scripts/<name>
 
-# every 2 months
-0 0 1 */2 * docker exec -it alyx_apache bash -c "certbot renew --apache 2>&1 | tee /var/log/certbot-renew.log"
+# Reload the database from the nightly S3 checkpoint (host-side: uses docker cp/exec)
+15 23 * * * /home/ubuntu/app/scripts/00_rebuild_from_cache.sh > /var/log/alyx/00_rebuild_from_cache.log 2>&1
+
+# Certificate renewal (no firewall hooks needed on this host)
+30 1 1,15 * * docker exec alyx_apache bash -c "certbot renew --post-hook 'apachectl graceful' 2>&1 | tee /var/log/certbot-renew.log"

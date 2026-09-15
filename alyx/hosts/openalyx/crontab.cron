@@ -1,2 +1,13 @@
-# every 2 months
-0 0 1 */2 * ~/Documents/PYTHON/iblsre/alyx/hosts/openalyx/02_renew_certificate.sh > /var/log/alyx/02_renew_certificate.log
+# openalyx crontab. Install as the ubuntu user (NOT root):
+#     crontab ~/Documents/PYTHON/iblsre/alyx/hosts/openalyx/crontab.cron
+#
+# Nothing here needs root -- see the note in alyx-prod/crontab.cron. Logs go to
+# /var/log/alyx/ because ubuntu cannot write to /var/log or /var/log/apache2.
+#
+# This renews the existing certificate on a schedule, matching what was actually installed
+# in root's crontab. The repo previously carried a different, never-installed entry that ran
+# scripts/02_renew_certificate.sh every two months to RE-ISSUE the certificate with
+# `certbot --apache`; `certbot renew` is the right operation for a periodic job.
+
+# Renew certificates at 01:30 on the 1st and 15th
+30 1 1,15 * * docker exec alyx_apache certbot renew --post-hook "apachectl graceful" > /var/log/alyx/cert_renew.log 2>&1

@@ -1,0 +1,15 @@
+# alyx-prod crontab. Install as the ubuntu user (NOT root):
+#     crontab ~/Documents/PYTHON/iblsre/alyx/hosts/alyx-prod/crontab.cron
+#
+# Nothing here needs root. `docker exec` only needs docker group membership, which ubuntu
+# has, and certbot runs as root inside the container regardless of who invoked docker.
+# Logs go to /var/log/alyx/ because ubuntu cannot write to /var/log itself (root:syslog) or
+# to /var/log/apache2 (www-data:www-data). ansible_deploy_alyx.yaml creates that directory.
+#
+# Scripts are synced to ~/app/scripts and mounted into the container at /home/scripts.
+
+# Renew certificates at 01:30 on the 1st and 15th
+30 1 1,15 * * docker exec alyx_apache certbot renew --post-hook "apachectl graceful" > /var/log/alyx/cert_renew.log 2>&1
+
+# Remove completed jobs.Task objects
+30 3 * * 5 docker exec alyx_apache /bin/bash /home/scripts/cleanup_old_tasks.sh > /var/log/alyx/cleanup_old_tasks.log 2>&1

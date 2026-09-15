@@ -24,6 +24,24 @@ services:
                /usr/sbin/apache2ctl -DFOREGROUND"
     volumes:
       - ${ALYX_SETTINGS_LAB:-/home/ubuntu/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
+      # TRANSITIONAL -- remove once this host runs an alyx image newer than 3.6.4.
+      #
+      # The deployment scripts have moved to iblsre (synced to ~/app/scripts, mounted at /home/scripts
+      # by docker-compose.scripts.yaml) and ec2_modify_groups.sh now ships inside the alyx
+      # image at /usr/local/bin. Nothing in the new layout needs /home/iblalyx.
+      #
+      # It stays only because the image currently deployed here (3.6.4) has an
+      # alyx_issue_ssl.sh that still hard-codes /home/iblalyx/crons/ec2_modify_groups.sh as
+      # its certbot hook. That script runs on every container start and issues the
+      # certificate when none exists, so removing the mount before the new image is deployed
+      # would break certificate issuance on a rebuild.
+      #
+      # This is not hypothetical: the mount was dropped on 2026-08-29, certbot's 2026-09-01
+      # renewal failed with "Unable to find pre-hook command
+      # /home/iblalyx/crons/ec2_modify_groups.sh in the PATH", and the certificate lapsed on
+      # 2026-09-13. Verify the deployed image ships /usr/local/bin/ec2_modify_groups.sh
+      # before deleting this line.
+      - ${IBLALYX_ROOT:-/home/ubuntu/iblalyx}:/home/iblalyx
     depends_on: !override []
   postgres:
     profiles: ["unused"]

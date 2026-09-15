@@ -1,0 +1,16 @@
+# Mounts the host's synced deployment scripts into the container, read-only.
+#
+# This overlay is applied to EVERY host, unconditionally, and is deliberately separate from
+# docker-compose.ibl.yaml.
+#
+# Operational dependencies must not be switchable by an application-level decision, so they
+# live here, with no per-host opt-out.
+#
+# ansible_deploy_alyx.yaml syncs alyx/scripts/ (fleet-wide) plus alyx/hosts/<host>/scripts/
+# (host-specific) into ~/app/scripts on the host; host-side invocations, in-container
+# `docker exec ... /home/scripts/<script>` invocations and manual runs all read from that
+# one directory.
+services:
+  alyx_apache:
+    volumes:
+      - ${ALYX_SCRIPTS_ROOT:-/home/ubuntu/app/scripts}:/home/scripts:ro
