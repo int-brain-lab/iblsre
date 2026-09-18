@@ -1,0 +1,98 @@
+[
+  {
+    "model": "experiments.probeinsertion",
+    "pk": "47e735ca-f14a-44d3-bea0-0e6a5a771cd1",
+    "fields": {
+      "name": "probe00",
+      "json": null,
+      "session": "d3372b15-f696-4279-9be5-98f15783b5bb",
+      "model": "057d9a20-aaa9-4f79-8b0c-c8729b4cf160",
+      "serial": "18194810662",
+      "chronic_insertion": null
+    }
+  },
+  {
+    "model": "experiments.probeinsertion",
+    "pk": "945ce18d-f27c-43cb-9341-a079090dd6b9",
+    "fields": {
+      "name": "probe01",
+      "json": null,
+      "session": "d3372b15-f696-4279-9be5-98f15783b5bb",
+      "model": "057d9a20-aaa9-4f79-8b0c-c8729b4cf160",
+      "serial": "18194810662",
+      "chronic_insertion": null
+    }
+  },
+  {
+    "model": "experiments.probeinsertion",
+    "pk": "b83407f8-8220-46f9-9b90-a4c9f150c572",
+    "fields": {
+      "name": "probe00",
+      "json": null,
+      "session": "01390fcc-4f86-4707-8a3b-4d9309feb0a1",
+      "model": "96dccdfe-7206-4b65-bb17-0743c842acd0",
+      "serial": "641250420",
+      "chronic_insertion": null
+    }
+  },
+  {
+    "model": "experiments.probeinsertion",
+    "pk": "ad256265-03f2-4b4e-954b-0ba0c5cf6707",
+    "fields": {
+      "name": "probe01",
+      "json": null,
+      "session": "bc93a3b2-070d-47a8-a2b8-91b3b6e9f25c",
+      "model": "96dccdfe-7206-4b65-bb17-0743c842acd0",
+      "serial": "641250947",
+      "chronic_insertion": null
+    }
+  },
+  {
+    "model": "experiments.probeinsertion",
+    "pk": "76ea0435-033c-4612-9e41-3241d9f283cd",
+    "fields": {
+      "name": "probe00",
+      "json": null,
+      "session": "aaf101c3-2581-450a-8abd-ddb8f557a5ad",
+      "model": "057d9a20-aaa9-4f79-8b0c-c8729b4cf160",
+      "serial": "18194810662",
+      "chronic_insertion": null
+    }
+  },
+  {
+    "model": "experiments.probeinsertion",
+    "pk": "6a45ae7c-490a-4814-9d77-583b3be3958d",
+    "fields": {
+      "name": "probe00",
+      "json": null,
+      "session": "dfe99506-b873-45db-bc93-731f9362e304",
+      "model": "057d9a20-aaa9-4f79-8b0c-c8729b4cf160",
+      "serial": "18194810662",
+      "chronic_insertion": null
+    }
+  },
+  {
+    "model": "experiments.probeinsertion",
+    "pk": "bf746764-78e0-4b9c-bdf6-65b6ff45745d",
+    "fields": {
+      "name": "probe00a",
+      "json": null,
+      "session": "a9d89baf-9905-470c-8565-859ff212c7be",
+      "model": "6f586705-13a7-4c2a-ac4a-ef58b10d9bc4",
+      "serial": "20403320221",
+      "chronic_insertion": null
+    }
+  },
+  {
+    "model": "experiments.probeinsertion",
+    "pk": "88c5b384-62d7-4bdc-a130-4883f210f018",
+    "fields": {
+      "name": "fiber00",
+      "json": null,
+      "session": "cf264653-2deb-44cb-aa84-89b82507028a",
+      "model": "100fe998-986c-467d-aac8-a470e3a34341",
+      "serial": "fip_42_fiber00",
+      "chronic_insertion": null
+    }
+  }
+]
