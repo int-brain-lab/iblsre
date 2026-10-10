@@ -1,6 +1,7 @@
 ---
 # Cazettes-specific supplement — run AFTER ansible_setup_alyx_server.yaml.
-# Handles only what differs from the standard install: Cloudflare certbot + cert mount.
+# Handles only what differs from the standard install: Cloudflare certbot. The cert reaches the
+# container through the base compose's /etc/letsencrypt mount (deploy via ansible_deploy_alyx.yaml).
 #
 # Required vars:
 #   cloudflare_api_token   Cloudflare "Edit zone DNS" token scoped to iblcore.org
@@ -18,7 +19,6 @@
   vars:
     domain: cazettes.iblcore.org
     certbot_creds: /etc/letsencrypt/cloudflare.ini
-    deploy_dir: /home/ubuntu/Documents/PYTHON/iblsre/alyx/containers/deploy-web
 
   tasks:
 
@@ -74,15 +74,3 @@
         owner: root
         group: root
         mode: '0755'
-
-    - name: Write docker-compose.override.yaml to mount host certs into container
-      copy:
-        dest: "{{ deploy_dir }}/docker-compose.override.yaml"
-        owner: ubuntu
-        group: ubuntu
-        mode: '0644'
-        content: |
-          services:
-            alyx_apache:
-              volumes:
-                - /etc/letsencrypt:/etc/letsencrypt:ro

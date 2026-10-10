@@ -80,11 +80,25 @@ all:
           alyx_hostname: steinmetzlab
           expected_server_name: alyx.steinmetzlab.net
 
+        # ---- cazettes -------------------------------------------------------
+        # Database `cazettes_alyx` lives on the same RDS instance `openlayx` as openalyx,
+        # which is why rollback here is a per-database pg_dump and not an RDS instance
+        # snapshot -- an instance snapshot taken for openalyx would capture cazettes, and
+        # restoring it would roll cazettes back too.
+        # TLS is issued by host-side certbot (Cloudflare DNS-01, see
+        # hosts/cazettes/cazettes_setup.yaml); the base compose already mounts
+        # /etc/letsencrypt, so alyx_issue_ssl.sh finds the cert and skips issuance.
+        # alyx_apply_ibl_overlay=false: the running container has no iblalyx mounts and the
+        # box has no ~/iblalyx clone (checked over ssh), so enabling the overlay would be a
+        # container spec change rather than a like-for-like migration.
+        # Requires an `alyx-cazettes` entry in the control node's ~/.ssh/config and the
+        # security group to allow SSH from it.
+        cazettes:
+          ansible_host: alyx-cazettes
+          alyx_hostname: cazettes
+          expected_server_name: cazettes.iblcore.org
+          alyx_apply_ibl_overlay: false
+
         # ---- Deliberately excluded ---------------------------------------------------
-        # cazettes: stays on its own manual procedure (containers/deploy-web). It also
-        #   shares RDS instance `openlayx` with openalyx (database cazettes_alyx), which
-        #   is why rollback here is a per-database pg_dump and not an RDS instance
-        #   snapshot -- an instance snapshot taken for openalyx would capture cazettes,
-        #   and restoring it would roll cazettes back too.
         # mbox: separate import-container procedure, and is the control node itself.
         # sdsc: non-containerized, manual deploy procedure.

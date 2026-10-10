@@ -1,0 +1,16 @@
+{
+	"data": "ENC[AES256_GCM,data:gfibW1kxPR3bC5PCOFswxWwOMTCHaYhvkJEI1Nvreg2zlloc3FOyoE8o030U4pHRKtb2pYifU7zulqHogZy5omyftuPvckjUmuDNWXK4jR3Ht723vWJL/3PjgXjRNaozo9FQ5RbGjft5ajLH9FIWYgi4diF1MCmrSrLXjS4cRfxN3LaUEgHKoT7f1E9WbH6CryVw9K29qWwKu5OKj0chRvLpLMGgp6MyMIP9niK5nI5iK3RfWM1Gx/nL0JbEYQ+6AoFHU/ImubaptPjcTg4pUdnkuBFF8xZxI8msq+p6T4//mvmz+SSGJOedAHJg9lAsW0ISwp4uugayjXMPGXa6JNIZO5TpP2jRlZsQ+NZeNvO33Me2kBCbpVXOhLqU7NBu/QzCsBDkABtOHOT4/NW3tWtkl7tqjgP/TgxhXjnKpVDev3EaDP8+rniEWJ7o09NI+i4/tfEURsJVIW3nZigR8TMZtmhzMmlxL+EWPEWv2zFfIw9U3yzNVPzevgIc5X9m65xsdg4t2FEEU/XJ/+5deXpEZKNfvMSjx4VOQRW7K74sB4hVyZNhQazpSCtpAWDEZS/fl0tHAD5SEf0vK+S5K5KLmmntJxhjwnF68AfdfphIQaE1aBOcG39/RESGyXCDqi6SDyxq7JCYUM6moCsOfIvaRt8bdQnD2Efiy50pgvHH7z0uEY+OqS0a9vk47weF58bOLYJ0JClSd+JlloLBMFv43JCHlpQE+qKykrX68j5pX5UsAYI8vHESaHGcNMV8VsoUI13Mjanxrma3Ras9tvPqZ79+8Fxk209yf8aS0y1FNB9XQMen/YUxxacA2DDI0sbW6duDuys1/8TZiE2tD527GH0CGXi4fj29z9XVRLacIzd+2CXAbEt+G/eeFnLpxf9hp5Yc2OyPCZeWu3pjku/pPXCqkj2c/rI30VA/2uw7UwI2X9NtOmBKygOPMzq6FcOlDeeRrSTwi08XAVg7biLWqFWX4u8E3uR3FOUSOGhc/dKMykbAiPzw16MyYaZc2vbWRdNCVqRdG7jxqK9kwTNFoUfmB0CpMqogebfoZE4AIhrA7HXzp1gJoHZMlb0Z5P/rcCUc8sjmqyEJ82RcaDKklUQNhrBUUkzh/cuQ50X3HS+Pq3IMBtT/iXJzMyq5vPD7AC/XVA==,iv:ghVv1cED7uZWWD/GaOzXgk1kDgIUfookrE33w+y0KfQ=,tag:T1n13k946nF6M9ZnyYeTeA==,type:str]",
+	"sops": {
+		"kms": [
+			{
+				"arn": "arn:aws:kms:eu-west-2:537761737250:key/cfed3daf-e447-4bd4-b43c-af1347b5aa02",
+				"aws_profile": "",
+				"created_at": "2026-10-10T16:10:10Z",
+				"enc": "AQICAHi3TDW10Xdifar2WWLTjWfAfb/W+Qz2dtnR4igE6cLfNgF7K/ahI1wtxwRmBkCloDmsAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMNy3gtlZWjXGrPx3oAgEQgDsZhrpMlAx++/gjEo9aFuUMDDb3hnFOsJdHNk4hXJhxtz0BBL4lNJuSRvs+YSVrLHBf/oi890Ajie6Npw=="
+			}
+		],
+		"lastmodified": "2026-10-10T16:10:10Z",
+		"mac": "ENC[AES256_GCM,data:1H7rSCMXVOBtSeI2kS+3gs0cF9N/pQvt+us4UmL6Q89dvJZZvT6sDffpOs4fNGCT3bis2oi3c2zsdinWNAtnWgiQ5iWgkm7JQ0FJXpDS2j4Mcpm1ZJyOVQKYtLR0cMhnJi/SGP8e7FYnpvM/S1DvS1bCoppfDZ87OwH2hywey4E=,iv:8lkU3Aw6Z7w8WwnAw35BJCejPihqcbzRYe0pxfpjMf4=,tag:YHyeYerdBzz0JRcz9OLPrQ==,type:str]",
+		"version": "3.13.3"
+	}
+}

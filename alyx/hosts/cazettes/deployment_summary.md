@@ -35,17 +35,38 @@ All resources tagged `Project=2026-cazettes`.
 
 Issued by Let's Encrypt via Cloudflare DNS-01 challenge (`python3-certbot-dns-cloudflare`).  
 Auto-renews via `/etc/letsencrypt/renewal-hooks/deploy/restart-alyx.sh` (restarts `alyx_apache` on renewal).
+Host-side certbot is set up by `cazettes_setup.yaml`; the base compose mounts `/etc/letsencrypt` into the
+container, and `alyx_issue_ssl.sh` skips issuance because the certificate already exists.
 
 ---
 
 ## Server Layout
 
+Deployed by `alyx/ansible/ansible_deploy_alyx.yaml` (inventory host `cazettes`), same as the other servers.
+`~/app` is managed by ansible and is not a git checkout.
+
 ```
-/home/ubuntu/Documents/PYTHON/iblsre/   ← iblsre repo
-alyx/containers/deploy-web/
-  docker-compose.yaml                   ← main compose file
-  .env                                  ← secrets (not committed)
-/etc/letsencrypt/                       ← mounted :ro into container
+/home/ubuntu/app/
+  docker-compose.yaml            ← fetched from the cortex-lab/alyx release tag
+  docker-compose.scripts.yaml    ← fleet-wide scripts mount
+  docker-compose.host.yaml       ← from alyx/hosts/cazettes/ (RDS: local postgres disabled)
+  .env                           ← decrypted from alyx/hosts/cazettes/env (see below)
+  scripts/                       ← synced from alyx/scripts/
+/etc/letsencrypt/                ← host certbot (Cloudflare DNS-01), mounted into the container
+```
+
+The IBL overlay (`docker-compose.ibl.yaml`) is disabled for this host (`alyx_apply_ibl_overlay: false`):
+no iblalyx mounts, no `~/iblalyx` clone.
+
+### Secrets
+
+`alyx/hosts/cazettes/env` is the sops-encrypted `.env` (KMS key in the UCL account). The playbook never
+creates `~/app/.env`; place it on the server before the first deploy, and again after any change:
+
+```bash
+# from alyx/ on a machine with the `ucl` AWS profile
+AWS_PROFILE=ucl sops -d --input-type json --output-type binary hosts/cazettes/env \
+  | ssh alyx-cazettes 'umask 077; mkdir -p ~/app && cat > ~/app/.env'
 ```
 
 ---
@@ -68,19 +89,16 @@ correct state. A permanent fix would be to add `apache2ctl graceful` at the end 
 
 ## Update Procedure
 
+From the control node (mbox), in `alyx/ansible`:
+
 ```bash
-cd ~/Documents/PYTHON/iblsre/alyx/containers/deploy-web
-git pull
-docker compose pull
-docker compose down
-docker compose up -d
-docker exec -it alyx_apache python manage.py migrate
+git -C ../.. pull
+ansible-playbook ansible_deploy_alyx.yaml -e alyx_version=<tag> --limit cazettes
 ```
 
-If disk is tight before pulling:
-```bash
-docker system prune --all --force
-```
+The playbook takes a per-database `pg_dump` of `cazettes_alyx` first (not an RDS snapshot: the `openlayx`
+instance is shared with openalyx), pulls the image, recreates the containers, runs `migrate` and the
+post-deploy checks. Rollback dumps are kept in `~/backups/alyx`.
 
 ---
 

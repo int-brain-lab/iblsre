@@ -1,9 +1,9 @@
 # Cazettes overlay: RDS-backed, no local postgres used -- disabled below (profiles alone
 # isn't enough, also needs !override on depends_on, see openalyx's overlay for why).
 #
-# NB: cazettes currently deploys via its own separate mechanism (cazettes_setup.yaml +
-# containers/deploy-web), not yet the ansible_deploy_alyx.yaml + ~/app flow -- this file is
-# not wired up anywhere until/unless cazettes migrates to that flow.
+# Deployed via `ansible_deploy_alyx.yaml` (inventory host `cazettes`). TLS comes from
+# host-side certbot (cazettes_setup.yaml); no cert mount is needed here because the base
+# compose already mounts /etc/letsencrypt into alyx_apache.
 services:
   alyx_apache:
     depends_on: !override []
