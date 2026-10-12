@@ -1,8 +1,36 @@
-# openalyx overlay: RDS-backed, no local postgres ever used, so disable the base compose's
-# `postgres` service. `profiles` alone isn't enough -- alyx_apache's plain `depends_on` would
-# still force it to start, hence the `!override` to actually clear that dependency.
+# openalyx overlay: the public database (openalyx.internationalbrainlab.org).
+#
+# RDS-backed, no local postgres ever used, so disable the base compose's `postgres` service.
+# `profiles` alone isn't enough -- alyx_apache's plain `depends_on` would still force it to
+# start, hence the `!override` to actually clear that dependency.
+#
+# This host does NOT get docker-compose.ibl.yaml (alyx_apply_ibl_overlay=false in the
+# inventory, which says why), so the only overlays above this one are the base compose and
+# the scripts mount. `command` replaces rather than merges, and neither of those installs
+# anything, so repeating the base steps here is enough.
+#
+# Differences from the base:
+#   - mounts settings_lab.py, pushed to ~/app by ansible_deploy_alyx.yaml from
+#     alyx/hosts/openalyx/settings_lab.py. It sets PUBLIC_DATABASE, the sign-up mailing
+#     preferences, EMAIL_BACKEND = django_ses.SESBackend and, when the ORCiD client
+#     credentials are in the environment, SSO_ENABLED;
+#   - installs django_ses and django-allauth[socialaccount] (the alyx[sso] extra, see alyx's
+#     pyproject.toml). The image ships neither: alyx's requirements.txt has boto3 but no SES
+#     backend and no allauth, because single sign-on is optional. Without them the settings
+#     above cannot import and the container will not start.
+#
+# The whole `uv pip install` stays on one line -- a folded scalar keeps the newlines of
+# more-indented lines, and a newline would end the command before the second package.
 services:
   postgres:
     profiles: ["unused"]
   alyx_apache:
+    command: >
+      bash -c "uv pip install --no-cache django_ses 'django-allauth[socialaccount]' &&
+               python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
+               /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
+               chown www-data:www-data -fR /var/log/apache2 &&
+               /usr/sbin/apache2ctl -DFOREGROUND"
+    volumes:
+      - ${ALYX_SETTINGS_LAB:-/home/ubuntu/app/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
     depends_on: !override []

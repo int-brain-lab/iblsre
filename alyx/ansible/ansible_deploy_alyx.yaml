@@ -93,6 +93,7 @@
     backup_dir: /home/ubuntu/backups/alyx
     alyx_raw_base: "https://raw.githubusercontent.com/cortex-lab/alyx/{{ alyx_version }}/deploy/app"
     host_override_src: "{{ hosts_dir }}/{{ alyx_hostname }}/docker-compose.host.yaml"
+    settings_lab_src: "{{ hosts_dir }}/{{ alyx_hostname }}/settings_lab.py"
     scripts_dir: "{{ app_dir }}/scripts"
     scripts_shared_src: "{{ playbook_dir }}/../scripts"
     scripts_host_src: "{{ hosts_dir }}/{{ alyx_hostname }}/scripts"
@@ -336,6 +337,40 @@
         state: absent
       when: not host_override.stat.exists
 
+    - name: Check whether this host ships a settings_lab.py
+      stat:
+        path: "{{ settings_lab_src }}"
+      delegate_to: localhost
+      register: settings_lab
+
+    - name: Check whether the host already has one
+      stat:
+        path: "{{ app_dir }}/settings_lab.py"
+      register: settings_lab_dest
+
+    - name: Seed this host's settings_lab.py
+      # Seeded once, then owned by the host: the copy in ~/app may have been edited in place
+      # to get a production instance working, and that edit must outrank the repo. So this
+      # only ever creates the file, never updates it, and there is deliberately no task
+      # removing it -- unlike the compose overlays above, ~/app/settings_lab.py is not kept
+      # an exact mirror of the repo.
+      #
+      # The consequence is that changing alyx/hosts/<host>/settings_lab.py does NOT reach a
+      # host that already has one. Apply such a change by hand, or delete the host's copy and
+      # re-run. The task below says which hosts were skipped.
+      copy:
+        src: "{{ settings_lab_src }}"
+        dest: "{{ app_dir }}/settings_lab.py"
+        mode: '0644'
+      when: settings_lab.stat.exists and not settings_lab_dest.stat.exists
+
+    - name: Say that the host's own settings_lab.py was kept
+      debug:
+        msg: >-
+          {{ app_dir }}/settings_lab.py already exists on {{ inventory_hostname }}, so the
+          copy in {{ settings_lab_src }} was not applied. Any change to the repo copy needs
+          applying by hand, or delete the host's file and re-run.
+      when: settings_lab.stat.exists and settings_lab_dest.stat.exists
     - name: Compute the COMPOSE_FILE list for this host
       set_fact:
         compose_files: >-

@@ -11,5 +11,5 @@
 services:
   alyx_apache:
     volumes:
-      - ${ALYX_SETTINGS_LAB:-/home/ubuntu/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
+      - ${ALYX_SETTINGS_LAB:-/home/ubuntu/app/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
 

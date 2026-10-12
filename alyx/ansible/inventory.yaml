@@ -34,10 +34,18 @@ all:
           alyx_hostname: alyx-test
           expected_server_name: test.alyx.internationalbrainlab.org
 
+        # alyx_apply_ibl_overlay=false: the public database serves released data only. It
+        # has no use for ibl_reports, and nothing else the overlay installs is needed here --
+        # iblutil arrives transitively through ONE-api, iblatlas is not imported by alyx, and
+        # oauth2client/googleapiclient are only used by the backup and download_gsheets
+        # management commands, which this host does not run (its crontab renews the
+        # certificate and nothing else). django-allauth comes from the host overlay instead,
+        # as the alyx[sso] extra.
         openalyx:
           ansible_host: openalyx
           alyx_hostname: openalyx
           expected_server_name: openalyx.internationalbrainlab.org
+          alyx_apply_ibl_overlay: false
 
         alyx-prod:
           ansible_host: alyx-prod

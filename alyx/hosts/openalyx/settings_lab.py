@@ -11,19 +11,6 @@ if TIME_ZONE not in zoneinfo.available_timezones():
 GLOBUS_CLIENT_ID = os.getenv('GLOBUS_CLIENT_ID')
 SUBJECT_REQUEST_EMAIL_FROM = os.getenv('APACHE_SERVER_ADMIN', 'alyx@localhost')
 
-# %% Public database
-# Uncomment on a public, read-only deployment serving released data. This enables the
-# self-registration page at /signup and hides lab member records from public users, who may
-# then see only redacted users and themselves. See settings.py for the other PUBLIC_SIGNUP_*
-# options and their defaults.
-PUBLIC_DATABASE = True
-
-# Registration confirmation and password reset both send mail, so a public database needs a
-# working email backend. For example, using django_ses (`pip install django-ses`):
-EMAIL_BACKEND = 'django_ses.SESBackend'
-AWS_SES_REGION_NAME = 'eu-west-2'
-AWS_SES_REGION_ENDPOINT = 'email.eu-west-2.amazonaws.com'
-DEFAULT_FROM_EMAIL = 'alyx@example.org'  # must be an SES-verified sender
 DEFAULT_SOURCE = 'IBL'
 DEFAULT_PROTOCOL = '1'
 SUPERUSERS = ('root',)
@@ -54,3 +41,38 @@ NARRATIVE_TEMPLATES = {
     <write your notes here>
         '''),
 }
+
+# %% Public database
+PUBLIC_DATABASE = True
+PUBLIC_SIGNUP_RESERVED_USERNAMES = (
+    "root", "admin", "administrator", "alyx", "test", "public", "anonymous", "intbrainlab")
+# Mailing preferences offered at sign-up; empty elsewhere, as consent to be emailed is specific
+# to a public database.
+EMAIL_PREFERENCES = {
+    "Data-release updates": "I agree that IBL may use my email address to send me updates about data releases. I can unsubscribe at any time by unchecking this box.",
+    "Follow-up about my research": "I agree that IBL may contact me occasionally by email, beginning six months after I receive access to the database, to ask whether and how I used the data, including what studies I conducted. I may choose whether to respond and can withdraw my consent at any time.",
+}
+# Email via Amazon SES (`pip install django-ses`)
+EMAIL_BACKEND = "django_ses.SESBackend"
+AWS_SES_REGION_NAME = "eu-west-2"
+AWS_SES_REGION_ENDPOINT = "email.eu-west-2.amazonaws.com"
+# Must be an address at a verified SES identity, or SES rejects the message.
+DEFAULT_FROM_EMAIL = os.getenv("ALYX_FROM_EMAIL", "alyx@internationalbrainlab.org")
+_orcid_id = os.getenv("ORCID_CLIENT_ID")
+_orcid_secret = os.getenv("ORCID_CLIENT_SECRET")
+if _orcid_id and _orcid_secret:
+    SSO_ENABLED = True
+    SSO_PROVIDER = "orcid"
+    SSO_PROVIDER_NAME = "ORCiD"
+    SSO_CREATE_USER = True
+    ACCOUNT_USERNAME_BLACKLIST = PUBLIC_SIGNUP_RESERVED_USERNAMES
+    SOCIALACCOUNT_PROVIDERS = {
+        "orcid": {
+            "APP": {"client_id": _orcid_id, "secret": _orcid_secret},
+            # sandbox.orcid.org for the ORCID sandbox, orcid.org for the real thing
+            "BASE_DOMAIN": os.getenv("ORCID_BASE_DOMAIN", "orcid.org"),
+        },
+    }
+    LOGIN_REDIRECT_URL = "/admin"
+    LOGOUT_REDIRECT_URL = "/admin/login/"
+
