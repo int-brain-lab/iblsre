@@ -99,7 +99,7 @@
         {% if alyx_db_is_local %}
         docker exec alyx_postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -qtAX -U "$POSTGRES_USER" -d "$POSTGRES_DB" -p "$POSTGRES_PORT" -c "SELECT pg_database_size(current_database())"'
         {% else %}
-        docker run --rm --env-file {{ pgenv.path }} postgres:17 sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -qtAX -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT pg_database_size(current_database())"'
+        docker run --rm --log-driver=none --env-file {{ pgenv.path }} postgres:17 sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -qtAX -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT pg_database_size(current_database())"'
         {% endif %}
       args:
         executable: /bin/bash
@@ -134,13 +134,20 @@
           {{ (backup_avail_bytes | int / 1073741824) | round(2) }} GB free.
 
     - name: Take the pre-deploy dump
+      # --log-driver=none is load-bearing, not tidiness: docker sends container stdout to
+      # the logging driver as well as to the attached client, so with the default json-file
+      # driver every byte of the dump is also written to the container's log, JSON-escaped.
+      # A binary -Fc dump inflates badly that way. On alyx-prod this filled 6 GB of disk
+      # while the dump itself had reached 1.2 GB, and pg_dump died with
+      # "write /dev/stdout: no space left on device". --rm then deleted the log with the
+      # container, so the space reappeared and the cause was invisible afterwards.
       shell: |
         set -euo pipefail
         umask 077
         {% if alyx_db_is_local %}
         docker exec alyx_postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB" -p "$POSTGRES_PORT"' > {{ snapshot_path }}
         {% else %}
-        docker run --rm --env-file {{ pgenv.path }} postgres:17 sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -Fc -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > {{ snapshot_path }}
+        docker run --rm --log-driver=none --env-file {{ pgenv.path }} postgres:17 sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -Fc -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > {{ snapshot_path }}
         {% endif %}
       args:
         executable: /bin/bash
