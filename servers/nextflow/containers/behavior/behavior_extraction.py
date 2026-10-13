@@ -29,7 +29,7 @@ def main(session_path: Path) -> None:
     experiment_description = sess_params.read_params(session_path)
 
     # the full behaviour task graph, equivalent to the ibllib.pipes.dynamic_pipeline protocol loop
-    tasks = _get_trials_tasks(session_path, acquisition_description=experiment_description, one=one)
+    tasks = _get_trials_tasks(session_path, experiment_description, one=one)
     pipeline = Pipeline(session_path=session_path, one=one)
     pipeline.tasks = tasks
     task_dicts = pipeline.create_alyx_tasks(rerun__status__in="__all__")
