@@ -1,0 +1,79 @@
+# mbox overlay: a command-only Alyx worker plus the two buffer databases it works on.
+#
+# The alyx container never serves HTTP and keeps no logs on the host. It is only `docker exec`'d
+# for manage.py commands: the cortexlab import (--database cortexlab), Globus sync, maintenance
+# and the openalyx release (iblalyx/releases/, --database public). Its databases are configured
+# by settings_lab.py (EXTRA_DATABASES), pushed to ~/app by ansible_deploy_alyx.yaml from
+# alyx/hosts/mbox/settings_lab.py.
+#
+# Applied without docker-compose.ibl.yaml (alyx_apply_ibl_overlay=false): that overlay mounts
+# ibl_reports and starts apache, neither of which this container wants. The iblalyx mounts it
+# does need are listed here instead.
+#
+# The base compose's ports, apache command and host volumes are replaced with !reset/!override,
+# since compose otherwise merges them. Container and volume names are kept from the previous
+# iblalyx/docker deployment so that the release scripts and the buffers' data carry over.
+services:
+  postgres:
+    profiles: ["unused"]
+
+  alyx_apache:
+    container_name: ibl_alyx_apache
+    command: >
+      bash -c "uv pip install --no-cache -r /home/iblalyx/requirements.txt &&
+               sleep infinity"
+    ports: !reset []
+    # Host has 3.8G total and no swap. An unbounded ORM bulk delete here once exhausted host
+    # memory and crashed the VM; better that manage.py is OOM-killed.
+    mem_limit: 1536m
+    memswap_limit: 1536m
+    volumes: !override
+      - ${ALYX_SETTINGS_LAB:-/home/ubuntu/app/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
+      - ${ALYX_SCRIPTS_ROOT:-/home/ubuntu/app/scripts}:/home/scripts:ro  # see docker-compose.scripts.yaml
+      - ${ALYX_ONE_DIR:-/home/ubuntu/Documents/PYTHON/iblalyx/docker/.one}:/root/.one  # TODO once deployed, move to ~/app/.one and remove iblalyx/docker/
+      - ${IBLALYX_ROOT:-/home/ubuntu/Documents/PYTHON/iblalyx}:/home/iblalyx
+      # iblalyx management commands only (see iblalyx/README.md), no ibl_reports
+      - ${IBLALYX_ROOT:-/home/ubuntu/Documents/PYTHON/iblalyx}/management/commands/_ibl:/var/www/alyx/alyx/data/management/commands/_ibl
+      - ${IBLALYX_ROOT:-/home/ubuntu/Documents/PYTHON/iblalyx}/management/commands/ibl.py:/var/www/alyx/alyx/data/management/commands/ibl.py
+      - ${IBLALYX_ROOT:-/home/ubuntu/Documents/PYTHON/iblalyx}/management/commands/sync_patcher.py:/var/www/alyx/alyx/data/management/commands/sync_patcher.py
+      - ${IBLALYX_ROOT:-/home/ubuntu/Documents/PYTHON/iblalyx}/management/commands/create_public_links.py:/var/www/alyx/alyx/data/management/commands/create_public_links.py
+      - ${IBLALYX_ROOT:-/home/ubuntu/Documents/PYTHON/iblalyx}/management/commands/update_tags.py:/var/www/alyx/alyx/data/management/commands/update_tags.py
+    depends_on: !override
+      - cortexlab_buffer_postgres
+      - openalyx_buffer_postgres
+
+  # UCL import buffer, schema dropped and recreated on each import by crons/mbox/ucl_import.sh
+  cortexlab_buffer_postgres:
+    image: postgres:17
+    container_name: cortexlab_buffer_postgres
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${CORTEXLAB_BUFFER_DB_USER}
+      POSTGRES_PASSWORD: ${CORTEXLAB_BUFFER_DB_PASSWORD}
+      POSTGRES_DB: ${CORTEXLAB_BUFFER_DB_NAME}
+    restart: always
+    mem_limit: 512m
+    memswap_limit: 512m
+    volumes:
+      - cortexlab_buffer_postgres:/var/lib/postgresql/data
+
+  # openalyx release buffer, rebuilt on each release by iblalyx/releases/
+  openalyx_buffer_postgres:
+    image: postgres:17
+    container_name: openalyx_buffer_postgres
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${OPENALYX_BUFFER_DB_USER}
+      POSTGRES_PASSWORD: ${OPENALYX_BUFFER_DB_PASSWORD}
+      POSTGRES_DB: ${OPENALYX_BUFFER_DB_NAME}
+    mem_limit: 1024m
+    memswap_limit: 1024m
+    volumes:
+      - openalyx_buffer_postgres:/var/lib/postgresql/data
+
+volumes:
+  # Named explicitly: these are the volumes the iblalyx/docker project created.
+  cortexlab_buffer_postgres:
+    name: docker_cortexlab_buffer_postgres
+  openalyx_buffer_postgres:
+    name: docker_openalyx_buffer_postgres
