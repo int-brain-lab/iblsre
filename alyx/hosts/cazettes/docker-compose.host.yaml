@@ -4,8 +4,13 @@
 # Deployed via `ansible_deploy_alyx.yaml` (inventory host `cazettes`). TLS comes from
 # host-side certbot (cazettes_setup.yaml); no cert mount is needed here because the base
 # compose already mounts /etc/letsencrypt into alyx_apache.
+#
+# Mounts settings_lab.py, seeded to ~/app by ansible_deploy_alyx.yaml from
+# alyx/hosts/cazettes/settings_lab.py (the image's defaults plus the admin ADMIN_THEME colors).
 services:
   alyx_apache:
+    volumes:
+      - ${ALYX_SETTINGS_LAB:-/home/ubuntu/app/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
     depends_on: !override []
   postgres:
     profiles: ["unused"]
