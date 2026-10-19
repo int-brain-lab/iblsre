@@ -152,6 +152,7 @@
         executable: /bin/bash
       register: env_kv
       changed_when: false
+      check_mode: false  # read-only, and the identity assert below needs it in --check too
 
     - name: Parse them
       set_fact:
@@ -201,6 +202,7 @@
         executable: /bin/bash
       register: docker_avail_raw
       changed_when: false
+      check_mode: false  # read-only
 
     - name: Assert there is room for the image pull
       assert:
@@ -402,15 +404,30 @@
     # briefly since postgres may not have finished accepting connections yet right after
     # `up -d`.
     - name: Apply database migrations
-      command: docker exec alyx_apache python manage.py migrate --noinput
+      command: docker exec {{ alyx_container }} python manage.py migrate --noinput
       register: migrate_result
       changed_when: "'No migrations to apply' not in migrate_result.stdout"
       until: migrate_result.rc == 0
       retries: 5
       delay: 5
+      # A worker's default database belongs to another host (mbox's is production), whose own
+      # deploy migrates it.
+      when: not (alyx_worker | bool)
 
     - name: Run the post-deploy checks
       include_tasks: tasks/postcheck.yaml
+      when: not (alyx_worker | bool)
+
+    - name: Check that Django starts in the worker container
+      # A worker serves no HTTP, so the web post-checks do not apply. `check` imports the
+      # settings and every app, which is what a broken settings_lab.py or mount would fail.
+      command: docker exec {{ alyx_container }} python manage.py check
+      register: worker_check
+      changed_when: false
+      until: worker_check.rc == 0
+      retries: 12  # the container installs the iblalyx requirements before it is usable
+      delay: 10
+      when: alyx_worker | bool
 
     # ---- only once this host is verified good ---------------------------------------
 

@@ -107,6 +107,22 @@ all:
           expected_server_name: cazettes.iblcore.org
           alyx_apply_ibl_overlay: false
 
+        # ---- mbox ----------------------------------------------------------------------
+        # The control node itself, hence the local connection. A command-only worker
+        # (alyx_worker): its container, ibl_alyx_apache, serves no HTTP and is only
+        # `docker exec`'d for the cortexlab import, Globus sync and openalyx releases. Its
+        # default database is PRODUCTION, so the playbook must never migrate it from here
+        # (alyx-prod's own deploy does) and takes no snapshot of it.
+        # Deploying recreates ibl_alyx_apache and the two buffer containers, so do not run
+        # it during an import (23:00) or a release.
+        mbox:
+          ansible_connection: local
+          alyx_hostname: mbox
+          expected_server_name: localhost
+          alyx_container: ibl_alyx_apache
+          alyx_worker: true
+          alyx_snapshot: false
+          alyx_apply_ibl_overlay: false
+
         # ---- Deliberately excluded ---------------------------------------------------
-        # mbox: separate import-container procedure, and is the control node itself.
         # sdsc: non-containerized, manual deploy procedure.

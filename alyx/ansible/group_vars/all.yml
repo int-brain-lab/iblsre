@@ -42,3 +42,7 @@ alyx_min_free_pull_gb: 3
 # Where the post-deploy TLS check runs: control_node (default, also proves the site is
 # publicly reachable), host (proves TLS only), or skip.
 alyx_tls_check_from: control_node
+# The alyx container's name, and whether this host is a command-only worker that serves no
+# HTTP and must not migrate its default database (see the mbox entry in inventory.yaml).
+alyx_container: alyx_apache
+alyx_worker: false
