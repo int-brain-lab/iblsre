@@ -13,3 +13,10 @@
 
 # Remove completed jobs.Task objects
 30 3 * * 5 docker exec alyx_apache /bin/bash /home/scripts/cleanup_old_tasks.sh > /var/log/alyx/cleanup_old_tasks.log 2>&1
+
+# Client usage (iblalyx/client_usage). Purge daily: it reduces each ended day's per-caller hashes
+# for shared accounts to a count and deletes them, so they never outlive the next morning, and
+# expires records past CLIENT_USAGE_RETENTION_DAYS.
+15 4 * * * docker exec alyx_apache python manage.py client_usage purge > /var/log/alyx/client_usage_purge.log 2>&1
+# Weekly summary of the past 7 days, Mondays at 05:00, appended so earlier weeks are kept.
+0 5 * * 1 { date -u; docker exec alyx_apache python manage.py client_usage report --days 7; echo; } >> /var/log/alyx/client_usage_report.log 2>&1
