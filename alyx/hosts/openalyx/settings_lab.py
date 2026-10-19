@@ -76,3 +76,30 @@ if _orcid_id and _orcid_secret:
     LOGIN_REDIRECT_URL = "/admin"
     LOGOUT_REDIRECT_URL = "/admin/login/"
 
+# %% Client usage (iblalyx/client_usage)
+# Records which client software, and which versions of it, each account uses: see
+# `manage.py client_usage report`. The package is installed by this host's compose command.
+# The records are kept in a database of their own on the same RDS instance: a data release
+# replaces the main database wholesale, and the usage history must survive it.
+EXTRA_INSTALLED_APPS = ('client_usage',)
+EXTRA_MIDDLEWARE = ('client_usage.middleware.ClientUsageMiddleware',)
+EXTRA_DATABASES = {
+    'usage': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('CLIENT_USAGE_DB_NAME', 'openalyx_usage'),
+        'USER': os.getenv('POSTGRES_USER', ''),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('POSTGRES_HOST', ''),
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+    },
+}
+DATABASE_ROUTERS = ['client_usage.router.ClientUsageRouter']
+CLIENT_USAGE_DATABASE = 'usage'
+# The shared public login: count the distinct callers behind it before it is retired.
+CLIENT_USAGE_SHARED_ACCOUNTS = ('intbrainlab',)
+# Sent in the Alyx-API-Notice header on every response to these accounts. Enable once a
+# retirement date for the shared login has been set.
+CLIENT_USAGE_NOTICES = {
+    'intbrainlab': '!!!The shared public account will be retired soon. Register your own '
+                   'account at https://openalyx.internationalbrainlab.org/signup',
+}

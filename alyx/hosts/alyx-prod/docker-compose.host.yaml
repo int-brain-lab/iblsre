@@ -1,7 +1,23 @@
 # alyx-prod overlay: RDS-backed, no local postgres used -- disabled below (profiles alone
 # isn't enough, also needs !override on depends_on, see openalyx's overlay for why).
+#
+# Also mounts settings_lab.py, pushed to ~/app by ansible_deploy_alyx.yaml from
+# alyx/hosts/alyx-prod/settings_lab.py, and installs the client_usage app it enables. This
+# overlay sorts after docker-compose.ibl.yaml and `command` replaces rather than merges, so the
+# IBL overlay's requirements install and the base steps are repeated here. The whole
+# `uv pip install` stays on one line: a folded scalar keeps the newlines of more-indented lines.
+#
+# client_usage is pinned to an iblalyx commit; change the ref here to upgrade it.
 services:
   alyx_apache:
+    command: >
+      bash -c "uv pip install --no-cache -r /home/iblalyx/requirements.txt 'alyx-client-usage @ git+https://github.com/int-brain-lab/iblalyx@700e0b558f2ae94341aa0390af6f0f81c5eeca24#subdirectory=client_usage' &&
+               python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
+               /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
+               chown www-data:www-data -fR /var/log/apache2 &&
+               /usr/sbin/apache2ctl -DFOREGROUND"
+    volumes:
+      - ${ALYX_SETTINGS_LAB:-/home/ubuntu/app/settings_lab.py}:/var/www/alyx/alyx/alyx/settings_lab.py:ro
     depends_on: !override []
   postgres:
     profiles: ["unused"]

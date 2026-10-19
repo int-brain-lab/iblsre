@@ -17,7 +17,9 @@
 #   - installs django_ses and django-allauth[socialaccount] (the alyx[sso] extra, see alyx's
 #     pyproject.toml). The image ships neither: alyx's requirements.txt has boto3 but no SES
 #     backend and no allauth, because single sign-on is optional. Without them the settings
-#     above cannot import and the container will not start.
+#     above cannot import and the container will not start;
+#   - installs the client_usage app (iblalyx/client_usage), pinned to an iblalyx commit; change
+#     the ref here to upgrade it.
 #
 # The whole `uv pip install` stays on one line -- a folded scalar keeps the newlines of
 # more-indented lines, and a newline would end the command before the second package.
@@ -26,7 +28,7 @@ services:
     profiles: ["unused"]
   alyx_apache:
     command: >
-      bash -c "uv pip install --no-cache django_ses 'django-allauth[socialaccount]' &&
+      bash -c "uv pip install --no-cache django_ses 'django-allauth[socialaccount]' 'alyx-client-usage @ git+https://github.com/int-brain-lab/iblalyx@700e0b558f2ae94341aa0390af6f0f81c5eeca24#subdirectory=client_usage' &&
                python /var/www/alyx/alyx/manage.py collectstatic --noinput &&
                /bin/bash /usr/local/bin/alyx_issue_ssl.sh &&
                chown www-data:www-data -fR /var/log/apache2 &&
