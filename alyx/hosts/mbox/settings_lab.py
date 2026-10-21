@@ -87,3 +87,16 @@ EXTRA_INSTALLED_APPS = (
     'allauth.socialaccount.providers.orcid',
 )
 EXTRA_MIDDLEWARE = ('allauth.account.middleware.AccountMiddleware',)
+
+
+class _AllauthPublicOnlyRouter:
+    """Migrates the allauth tables into the release buffer only: neither production nor the
+    cortexlab import buffer has single sign-on."""
+
+    app_labels = {'allauth', 'account', 'socialaccount', 'orcid'}
+
+    def allow_migrate(self, db, app_label, **hints):
+        return db == 'public' if app_label in self.app_labels else None
+
+
+DATABASE_ROUTERS = ['alyx.settings_lab._AllauthPublicOnlyRouter']
