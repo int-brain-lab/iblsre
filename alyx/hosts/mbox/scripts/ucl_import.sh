@@ -8,8 +8,9 @@ docker exec -i cortexlab_buffer_postgres psql -q -U ibl_dev -d cortexlab -c "dro
 # Import the data from the remote alyx database into the local cortexlab database
 pg_dump -h alyx.cpd8pxc0pbj7.eu-west-2.rds.amazonaws.com -U alyx_admin -d alyx --no-owner --no-acl \
 | docker exec -i cortexlab_buffer_postgres psql -U ibl_dev -d cortexlab
-# Ensure database migrated
-docker exec -i ibl_alyx_apache bash -c "./manage.py migrate --database cortexlab"
+# Ensure database migrated, holding production read-only: field defaults that query the database
+# are evaluated against default whatever --database names (see hosts/mbox/settings_lab.py)
+docker exec -i -e ALYX_DEFAULT_READ_ONLY=1 ibl_alyx_apache bash -c "./manage.py migrate --database cortexlab"
 # Prune imported data and import into IBL database
 echo "Cascade deleting all non-IBL subjects"
 docker exec -i ibl_alyx_apache bash -c "python /home/iblalyx/scripts/prune_cortexlab.py"
