@@ -43,7 +43,7 @@ services:
       - cortexlab_buffer_postgres
       - openalyx_buffer_postgres
 
-  # UCL import buffer, schema dropped and recreated on each import by crons/mbox/ucl_import.sh
+  # UCL import buffer, schema dropped and recreated on each import by scripts/ucl_import.sh
   cortexlab_buffer_postgres:
     image: postgres:17
     container_name: cortexlab_buffer_postgres
