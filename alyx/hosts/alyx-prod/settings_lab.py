@@ -46,3 +46,9 @@ NARRATIVE_TEMPLATES = {
 # `manage.py client_usage report`. The package is installed by this host's compose command.
 EXTRA_INSTALLED_APPS = ('client_usage',)
 EXTRA_MIDDLEWARE = ('client_usage.middleware.ClientUsageMiddleware',)
+THROTTLE_TABLE_RATES = {
+    "actions_session.retrieve": "30/minute",
+    "experiments_probeinsertion.retrieve": "60/minute",
+    "experiments_probeinsertion.list": "30/minute",
+    "data_dataset.list": "60/minute"
+}

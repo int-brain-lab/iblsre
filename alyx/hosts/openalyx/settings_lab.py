@@ -103,3 +103,9 @@ CLIENT_USAGE_NOTICES = {
     'intbrainlab': '!!!The shared public account will be retired soon. Register your own '
                    'account at https://openalyx.internationalbrainlab.org/signup',
 }
+THROTTLE_TABLE_RATES = {
+    "actions_session.retrieve": "30/minute",
+    "experiments_probeinsertion.retrieve": "60/minute",
+    "experiments_probeinsertion.list": "30/minute",
+    "data_dataset.list": "60/minute"
+}
