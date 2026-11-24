@@ -103,6 +103,12 @@ CLIENT_USAGE_NOTICES = {
     'intbrainlab': '!!!The shared public account will be retired soon. Register your own '
                    'account at https://openalyx.internationalbrainlab.org/signup',
 }
+CLIENT_USAGE_OUTDATED_RATE = 0.1  # refuse this fraction of outdated clients' requests
+CLIENT_USAGE_OUTDATED_NOTICES = {  # the error for these accounts, instead of the default
+    'intbrainlab': 'The shared public account intbrainlab will be retired on 1 January 2027. '
+                   'Register your own account at https://openalyx.internationalbrainlab.org/signup '
+                   'and update ONE with `pip install -U ONE-api`, which your own account requires.',
+}
 THROTTLE_TABLE_RATES = {
     "actions_session.retrieve": "30/minute",
     "experiments_probeinsertion.retrieve": "60/minute",
