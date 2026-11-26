@@ -51,16 +51,36 @@
   register: vhost_conf
   changed_when: false
 
+- name: Read the WSGI daemon recycling limit
+  set_fact:
+    wsgi_max_requests: >-
+      {{ ((vhost_conf.stdout | regex_search('maximum-requests=(\d+)', '\1')) or ['0']) | first | int }}
+
 - name: Assert the WSGI daemon has the OOM-mitigation limits set
+  # Any release recycles the daemon; 4.2.0 recycles every 10000 requests rather than 1000, as
+  # each recycle also clears the in-memory throttle state. Older versions stay deployable.
   assert:
     that:
       - vhost_conf.stdout is search('WSGIDaemonProcess')
       - vhost_conf.stdout is search('request-timeout=300')
-      - vhost_conf.stdout is search('maximum-requests=1000')
+      - wsgi_max_requests | int >= 1000
     fail_msg: >-
-      WSGIDaemonProcess on {{ inventory_hostname }} is missing request-timeout=300 and/or
-      maximum-requests=1000 -- the recycling that keeps a leaking worker from OOMing the box.
-    success_msg: "WSGI request-timeout and maximum-requests set."
+      WSGIDaemonProcess on {{ inventory_hostname }} is missing request-timeout=300 and/or a
+      maximum-requests of at least 1000 -- the recycling that keeps a leaking worker from
+      OOMing the box.
+    success_msg: "WSGI request-timeout and maximum-requests={{ wsgi_max_requests }} set."
+
+- name: Assert the WSGI daemon recycles rarely and gracefully (alyx >= 4.2.0)
+  when: alyx_version is match('dev') or alyx_version is version('4.2.0', '>=')
+  assert:
+    that:
+      - wsgi_max_requests | int == 10000
+      - vhost_conf.stdout is search('graceful-timeout=15')
+      - vhost_conf.stdout is search('display-name=%\{GROUP\}')
+    fail_msg: >-
+      WSGIDaemonProcess on {{ inventory_hostname }} should have maximum-requests=10000,
+      graceful-timeout=15 and display-name=%{GROUP} from alyx 4.2.0.
+    success_msg: "WSGI daemon recycles every 10000 requests, gracefully, as (wsgi:alyx)."
 
 - name: Assert apache logs are piped through rotatelogs
   assert:

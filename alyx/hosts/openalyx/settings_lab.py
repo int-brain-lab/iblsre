@@ -83,7 +83,17 @@ if _orcid_id and _orcid_secret:
 # replaces the main database wholesale, and the usage history must survive it.
 EXTRA_INSTALLED_APPS = ('client_usage',)
 EXTRA_MIDDLEWARE = ('client_usage.middleware.ClientUsageMiddleware',)
+_PERSIST = {'CONN_MAX_AGE': 60, 'CONN_HEALTH_CHECKS': True}
 EXTRA_DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'USER': os.getenv('POSTGRES_USER', ''),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('POSTGRES_HOST', ''),
+        'NAME': os.getenv('POSTGRES_DB', ''),
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        **_PERSIST,
+    },
     'usage': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('CLIENT_USAGE_DB_NAME', 'openalyx_usage'),
@@ -91,6 +101,7 @@ EXTRA_DATABASES = {
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
         'HOST': os.getenv('POSTGRES_HOST', ''),
         'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        **_PERSIST,
     },
 }
 DATABASE_ROUTERS = ['client_usage.router.ClientUsageRouter']
